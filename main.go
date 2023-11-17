@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"crypto/tls"
-	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/informatiqal/qlik-test-users-tickets/API"
+	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
+	"github.com/informatiqal/qlik-test-users-tickets/Config"
+	"github.com/informatiqal/qlik-test-users-tickets/Util"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -19,6 +19,7 @@ func main() {
 	var testUsers []string
 	var certPathArg string
 	var hostArg string
+	var generateCert bool
 
 	flag.StringVar(
 		&testUsersDirectoryArg,
@@ -48,7 +49,19 @@ func main() {
 		"Semicolon list of users to be created into to the provided user directory",
 	)
 
+	flag.BoolVar(
+		&generateCert,
+		"generateCert",
+		false,
+		"Generate self-signed certificates in the current folder",
+	)
+
 	flag.Parse()
+
+	if generateCert {
+		util.CreateSelfSignedCertificates()
+		os.Exit(0)
+	}
 
 	testUsers = strings.Split(testUsersArg, ";")
 
@@ -61,7 +74,7 @@ func main() {
 		testUsersDirectoryArg != "" &&
 		certPathArg != "" &&
 		hostArg != "" {
-		createTestUsers(
+		qlik.CreateTestUsers(
 			hostArg,
 			testUsersDirectoryArg,
 			testUsers,
@@ -72,77 +85,23 @@ func main() {
 		fmt.Println("Operation completed!")
 		defer os.Exit(0)
 	}
-}
 
-func generateXrfkey() string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	// initialize the config (aka read the config file)
+	config.NewConfig()
 
-	b := make([]rune, 16)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
+	http.HandleFunc("/healthcheck", api.HealthCheckHandler)
+	http.HandleFunc("/ticket", api.GenerateTicket)
+	http.HandleFunc("/virtualproxies", api.VirtualProxiesList)
 
-	return string(b)
-}
-
-func createTestUsers(host string, userDirectory string, users []string, certPath string) bool {
-
-	cert, err := tls.LoadX509KeyPair(certPath+"/client.pem", certPath+"/client_key.pem")
+	log.Printf("HTTPS server starting listening on port %v\n", config.GlobalConfig.Server.Port)
+	err := http.ListenAndServeTLS(
+		":"+fmt.Sprint(config.GlobalConfig.Server.Port),
+		config.GlobalConfig.Server.HttpsCertificatePath+"/cert.pem",
+		config.GlobalConfig.Server.HttpsCertificatePath+"/cert_key.pem",
+		nil,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: false,
-		Certificates:       []tls.Certificate{cert},
-	}
-
-	client := &http.Client{Transport: customTransport}
-
-	for _, user := range users {
-		xrfkey := generateXrfkey()
-		url := fmt.Sprintf("https://%s:4242/qrs/user?Xrfkey=%s", host, xrfkey)
-
-		jsonBody := []byte(
-			fmt.Sprintf(
-				`{"userId": "%s","userDirectory": "%s","removedExternally": false,"blacklisted": false,"name": "%s"}`,
-				strings.TrimSpace(user),
-				userDirectory,
-				strings.TrimSpace(user),
-			),
-		)
-		bodyReader := bytes.NewReader(jsonBody)
-
-		req, err := http.NewRequest(
-			"POST",
-			url,
-			bodyReader,
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req.Header.Add("X-Qlik-Xrfkey", xrfkey)
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
-		resp, err := client.Do(req)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		type userDetails struct {
-			Id string `json:"id"`
-		}
-
-		var responseData userDetails
-
-		decoder := json.NewDecoder(resp.Body)
-		decoder.Decode(&responseData)
-
-		fmt.Printf("User \"%s\" created -> %s\n", strings.TrimSpace(user), responseData.Id)
-	}
-
-	return true
 }
