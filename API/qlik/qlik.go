@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	sysLog "log"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
+	"github.com/informatiqal/qlik-test-users-tickets/Logger"
 	util "github.com/informatiqal/qlik-test-users-tickets/Util"
+	"github.com/rs/zerolog"
 )
 
 type VirtualProxy struct {
@@ -23,6 +25,18 @@ type User struct {
 	Id            string `json:"id"`
 	UserDirectory string `json:"userDirectory"`
 	Name          string `json:"name"`
+}
+
+type GeneratedTicket struct {
+	UserId        string `json:"userId"`
+	UserDirectory string `json:"userDirectory"`
+	Ticket        string `json:"ticket"`
+}
+
+var log zerolog.Logger
+
+func init() {
+	log = logger.Zero
 }
 
 func CreateTestUsers(host string, userDirectory string, users []string, certPath string) bool {
@@ -46,7 +60,7 @@ func CreateTestUsers(host string, userDirectory string, users []string, certPath
 			bodyReader,
 		)
 		if err != nil {
-			log.Fatal(err)
+			sysLog.Fatal(err.Error())
 		}
 
 		req.Header.Add("X-Qlik-Xrfkey", xrfkey)
@@ -55,7 +69,7 @@ func CreateTestUsers(host string, userDirectory string, users []string, certPath
 		resp, err := config.QlikClient.Do(req)
 
 		if err != nil {
-			log.Fatal(err)
+			sysLog.Fatal(err.Error())
 		}
 
 		type userDetails struct {
@@ -71,12 +85,6 @@ func CreateTestUsers(host string, userDirectory string, users []string, certPath
 	}
 
 	return true
-}
-
-type GeneratedTicket struct {
-	UserId        string `json:"userId"`
-	UserDirectory string `json:"userDirectory"`
-	Ticket        string `json:"ticket"`
 }
 
 func CreateTicketForUser(
@@ -115,7 +123,9 @@ func CreateTicketForUser(
 		bodyReader,
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := GeneratedTicket{}
+		return t, err
 	}
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
@@ -123,13 +133,22 @@ func CreateTicketForUser(
 	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := GeneratedTicket{}
+		return t, err
 	}
 
 	var responseData GeneratedTicket
 
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
+
+	msg := fmt.Sprintf(
+		"Ticket %s was generated for userId %s",
+		responseData.Ticket,
+		userId,
+	)
+	log.Info().Msg(msg)
 
 	return responseData, nil
 }
@@ -148,7 +167,9 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 		http.NoBody,
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := []VirtualProxy{}
+		return &t, err
 	}
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
@@ -156,7 +177,9 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := []VirtualProxy{}
+		return &t, err
 	}
 
 	var responseData []VirtualProxy
@@ -182,7 +205,9 @@ func GetTestUsers() (*[]User, error) {
 		http.NoBody,
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := []User{}
+		return &t, err
 	}
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
@@ -190,7 +215,9 @@ func GetTestUsers() (*[]User, error) {
 	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := []User{}
+		return &t, err
 	}
 
 	var responseData []User
@@ -216,7 +243,9 @@ func GetUserDetails(userId string) (*User, error) {
 		http.NoBody,
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := User{}
+		return &t, err
 	}
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
@@ -224,7 +253,9 @@ func GetUserDetails(userId string) (*User, error) {
 	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("")
+		t := User{}
+		return &t, err
 	}
 
 	var responseData User

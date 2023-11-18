@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
+	"github.com/rs/zerolog/log"
 )
 
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,6 +15,8 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method is not supported.", http.StatusNotFound)
 		return
 	}
+
+	log.Debug().Msg("Healthcheck api called")
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -25,9 +28,8 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CreateTicketParams struct {
-		User                string `json:"userId"`
-		UserDirectorySuffix string `json:"userDirectorySuffix"`
-		VirtualProxyPrefix  string `json:"virtualProxyPrefix"`
+		User               string `json:"userId"`
+		VirtualProxyPrefix string `json:"virtualProxyPrefix"`
 	}
 	var reqBody CreateTicketParams
 	err := json.NewDecoder(r.Body).Decode(&reqBody)

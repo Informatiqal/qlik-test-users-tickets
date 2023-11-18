@@ -1,0 +1,13 @@
+[server]
+port = 8081
+httpsCertificatePath = "."
+
+[qlik]
+host = "qlik-host.com"
+certificatesPath = "c:/path/to/certificates"
+userId = "sa_api"
+userDirectory = "INTERNAL"
+
+[qlik.ports]
+repository = 4242
+proxy = 4243

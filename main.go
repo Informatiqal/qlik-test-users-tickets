@@ -7,53 +7,16 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API"
 	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
+	"github.com/informatiqal/qlik-test-users-tickets/Logger"
 	"github.com/informatiqal/qlik-test-users-tickets/Util"
-	"github.com/justinas/alice"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	appLogFile, _ := os.OpenFile(
-		"app.log",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0664,
-	)
-	appLog := zerolog.MultiLevelWriter(os.Stdout, appLogFile)
-	logger := zerolog.New(appLog).With().Timestamp().Logger()
-
-	httpLogFile, _ := os.OpenFile(
-		"http.log",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0664,
-	)
-	httpLog := zerolog.MultiLevelWriter(httpLogFile)
-	httpLogger := zerolog.New(httpLog).With().Timestamp().Logger()
-
-	c := alice.New()
-	c = c.Append(hlog.NewHandler(httpLogger))
-
-	c = c.Append(
-		hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-			hlog.FromRequest(r).Info().
-				Str("method", r.Method).
-				Stringer("url", r.URL).
-				Int("status", status).
-				Int("size", size).
-				Dur("duration", duration).
-				Msg("")
-		}),
-	)
-	c = c.Append(hlog.RemoteAddrHandler("ip"))
-	c = c.Append(hlog.UserAgentHandler("user_agent"))
-	c = c.Append(hlog.RefererHandler("referer"))
-	c = c.Append(hlog.RequestIDHandler("req_id", "Request-Id"))
+	log := logger.Zero
 
 	var testUsersDirectoryArg string
 	var testUsersArg string
@@ -131,10 +94,10 @@ func main() {
 	// initialize the config (aka read the config file)
 	config.NewConfig()
 
-	h := c.Then(http.HandlerFunc(api.HealthCheckHandler))
-	h1 := c.Then(http.HandlerFunc(api.GenerateTicket))
-	h2 := c.Then(http.HandlerFunc(api.VirtualProxiesList))
-	h3 := c.Then(http.HandlerFunc(api.TestUsersList))
+	h := logger.Chain.Then(http.HandlerFunc(api.HealthCheckHandler))
+	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
+	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
+	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
 
 	http.Handle("/healthcheck", h)
 	http.Handle("/ticket", h1)
@@ -142,7 +105,7 @@ func main() {
 	http.Handle("/users", h3)
 	// http.HandleFunc("/temp/", api.Test)
 
-	logger.Info().
+	log.Info().
 		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))
 	err := http.ListenAndServeTLS(
 		":"+fmt.Sprint(config.GlobalConfig.Server.Port),
