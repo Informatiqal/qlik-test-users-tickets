@@ -89,7 +89,7 @@ func main() {
 		&testUsersDirectoryArg,
 		"userDirectory",
 		"",
-		"Test users user directory (default is TESTING)",
+		"Test users user directory suffix. The resulted UD will be TESTING_<suffix>",
 	)
 
 	flag.StringVar(

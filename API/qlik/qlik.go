@@ -39,7 +39,12 @@ func init() {
 	log = logger.Zero
 }
 
-func CreateTestUsers(host string, userDirectory string, users []string, certPath string) bool {
+func CreateTestUsers(
+	host string,
+	userDirectorySuffix string,
+	users []string,
+	certPath string,
+) bool {
 	for _, user := range users {
 		xrfkey := util.GenerateXrfkey()
 		url := fmt.Sprintf("https://%s:4242/qrs/user?Xrfkey=%s", host, xrfkey)
@@ -48,7 +53,7 @@ func CreateTestUsers(host string, userDirectory string, users []string, certPath
 			fmt.Sprintf(
 				`{"userId": "%s","userDirectory": "%s","removedExternally": false,"blacklisted": false,"name": "%s"}`,
 				strings.TrimSpace(user),
-				userDirectory,
+				"TESTING_"+userDirectorySuffix,
 				strings.TrimSpace(user),
 			),
 		)
