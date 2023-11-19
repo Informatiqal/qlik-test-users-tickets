@@ -3,6 +3,7 @@ package logger
 import (
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/justinas/alice"
@@ -14,8 +15,11 @@ var Zero zerolog.Logger
 var Chain alice.Chain
 
 func init() {
+	pwd, _ := os.Executable()
+	dir := filepath.Dir(pwd)
+
 	appLogFile, _ := os.OpenFile(
-		"app.log",
+		dir+"/app.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0664,
 	)
@@ -23,7 +27,7 @@ func init() {
 	Zero = zerolog.New(appLog).With().Timestamp().Logger()
 
 	httpLogFile, _ := os.OpenFile(
-		"http.log",
+		dir+"/http.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0664,
 	)

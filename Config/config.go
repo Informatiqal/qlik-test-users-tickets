@@ -2,10 +2,12 @@ package config
 
 import (
 	"crypto/tls"
-	"github.com/pelletier/go-toml/v2"
-	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+
+	logger "github.com/informatiqal/qlik-test-users-tickets/Logger"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type config struct {
@@ -32,32 +34,36 @@ var GlobalConfig config
 var QlikClient *http.Client
 
 func NewConfig() {
-	pwd, _ := os.Getwd()
+	log := logger.Zero
+	pwd, _ := os.Executable()
+	dir := filepath.Dir(pwd)
 
-	configContent, readError := os.ReadFile(pwd + "/config.toml")
+	configContent, readError := os.ReadFile(dir + "/config.toml")
 	if readError != nil {
-		log.Fatal(readError)
+		log.Fatal().Err(readError).Msg("")
 	}
 
 	parseError := toml.Unmarshal([]byte(configContent), &GlobalConfig)
 	if parseError != nil {
-		panic(parseError)
+		log.Fatal().Err(readError).Msg("")
 	}
 
 	if GlobalConfig.Server.HttpsCertificatePath == "" {
-		log.Fatal("Certificate path should be provided")
+		log.Fatal().Err(readError).Msg("Certificate path should be provided")
 	}
 
 	setQlikHttpClient()
 }
 
 func setQlikHttpClient() {
+	log := logger.Zero
+
 	qlikCert, err := tls.LoadX509KeyPair(
 		GlobalConfig.Qlik.CertificatesPath+"/client.pem",
 		GlobalConfig.Qlik.CertificatesPath+"/client_key.pem",
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg(err.Error())
 	}
 
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()

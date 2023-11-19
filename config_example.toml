@@ -1,6 +1,6 @@
 [server]
 port = 8081
-httpsCertificatePath = "."
+httpsCertificatePath = "c:/path/to/https/pem/certificates"
 
 [qlik]
 host = "qlik-host.com"

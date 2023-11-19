@@ -13,7 +13,52 @@ import (
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
 	"github.com/informatiqal/qlik-test-users-tickets/Util"
+	"github.com/kardianos/service"
 )
+
+// var serviceLogger service.Logger
+
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	// Should be non-blocking, so run async using goroutine
+	go p.run()
+	return nil
+}
+
+func (p *program) run() {
+	log := logger.Zero
+
+	config.NewConfig()
+
+	h := logger.Chain.Then(http.HandlerFunc(api.HealthCheckHandler))
+	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
+	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
+	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
+
+	http.Handle("/healthcheck", h)
+	http.Handle("/ticket", h1)
+	http.Handle("/virtualproxies", h2)
+	http.Handle("/users", h3)
+	// http.HandleFunc("/temp/", api.Test)
+
+	log.Info().
+		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))
+	err := http.ListenAndServeTLS(
+		":"+fmt.Sprint(config.GlobalConfig.Server.Port),
+		config.GlobalConfig.Server.HttpsCertificatePath+"/cert.pem",
+		config.GlobalConfig.Server.HttpsCertificatePath+"/cert_key.pem",
+		nil,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg(err.Error())
+	}
+}
+
+func (p *program) Stop(s service.Service) error {
+	// Should be non-blocking
+	return nil
+}
 
 func main() {
 	log := logger.Zero
@@ -24,6 +69,21 @@ func main() {
 	var certPathArg string
 	var hostArg string
 	var generateCert bool
+	var mode string
+
+	svcConfig := &service.Config{
+		Name:        "QlikSenseTestUsers",
+		DisplayName: "Qlik Sense Test Users",
+		Description: "Generate Qlik tickets for test users",
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal().Err(err).Msg(err.Error())
+	}
+
+	flag.StringVar(&mode, "mode", "", "install/uninstall/run")
 
 	flag.StringVar(
 		&testUsersDirectoryArg,
@@ -62,6 +122,27 @@ func main() {
 
 	flag.Parse()
 
+	if mode == "install" {
+		err = s.Install()
+		if err != nil {
+			log.Fatal().Err(err).Msg(err.Error())
+		}
+	}
+
+	if mode == "uninstall" {
+		err = s.Uninstall()
+		if err != nil {
+			log.Fatal().Err(err).Msg(err.Error())
+		}
+	}
+
+	if mode == "" || mode == "run" {
+		err = s.Run()
+		if err != nil {
+			log.Fatal().Err(err).Msg(err.Error())
+		}
+	}
+
 	if generateCert {
 		util.CreateSelfSignedCertificates()
 		os.Exit(0)
@@ -89,32 +170,6 @@ func main() {
 		fmt.Println("")
 		fmt.Println("Operation completed!")
 		defer os.Exit(0)
-	}
-
-	// initialize the config (aka read the config file)
-	config.NewConfig()
-
-	h := logger.Chain.Then(http.HandlerFunc(api.HealthCheckHandler))
-	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
-	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
-	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
-
-	http.Handle("/healthcheck", h)
-	http.Handle("/ticket", h1)
-	http.Handle("/virtualproxies", h2)
-	http.Handle("/users", h3)
-	// http.HandleFunc("/temp/", api.Test)
-
-	log.Info().
-		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))
-	err := http.ListenAndServeTLS(
-		":"+fmt.Sprint(config.GlobalConfig.Server.Port),
-		config.GlobalConfig.Server.HttpsCertificatePath+"/cert.pem",
-		config.GlobalConfig.Server.HttpsCertificatePath+"/cert_key.pem",
-		nil,
-	)
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
 	}
 
 }
