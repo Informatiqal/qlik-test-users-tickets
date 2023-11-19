@@ -28,9 +28,10 @@ type User struct {
 }
 
 type GeneratedTicket struct {
-	UserId        string `json:"userId"`
-	UserDirectory string `json:"userDirectory"`
-	Ticket        string `json:"ticket"`
+	UserId             string `json:"userId"`
+	UserDirectory      string `json:"userDirectory"`
+	Ticket             string `json:"ticket"`
+	VirtualProxyPrefix string `json:"virtualProxyPrefix"`
 }
 
 var log zerolog.Logger
@@ -148,10 +149,13 @@ func CreateTicketForUser(
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
 
+	responseData.VirtualProxyPrefix = vp
+
 	msg := fmt.Sprintf(
-		"Ticket %s was generated for userId %s",
+		`Ticket "%s" was generated for userId %s in virtual proxy "%s"`,
 		responseData.Ticket,
 		userId,
+		vp,
 	)
 	log.Info().Msg(msg)
 
