@@ -2,11 +2,15 @@
 
 Backend service that can generate Qlik Sense tickets for specific test users
 
+## UNDER DEVELOPMENT
+
+The app is still being developed. The backend is almost there but the UI is missing at the moment.
+
 ## Description
 
 This idea had been on my mind for a long time now. On almost any Qlik Sense project there was an occasions that such service was needed. But always was pushed back because an workaround was found or was decided to invest the time for it on something else.
 
-The basic idea is to have a list of test users in Qlik Sense and the service can generate web tickets for them. Once the ticket is available the developer/tester can use the ticket to login to Qlik Sense as the test user and "see" throw the eyes of that user.
+The basic idea is to have a list of test users in Qlik Sense and the service can generate web tickets for them. Once the ticket is available the developer/tester can use the ticket to login to Qlik Sense as the test user and "see" throw the eyes of that user. This service is not meant to be used in production environment and is to help the developers/testers to verify the work in the lower environments (pre-prod, UAT, DEV, Test etc)
 
 The generated test users:
 
@@ -17,7 +21,7 @@ The generated test users:
 
 ### Executable
 
-First you'll need the [latest release](https://github.com/informatiqal/qlik-test-users-tickets/releases)
+First we'll need the [latest release](https://github.com/informatiqal/qlik-test-users-tickets/releases)
 
 ### SSL Certificates
 
@@ -81,15 +85,32 @@ The service produces two log files in the folder where the `qlik-test-users-tick
 - `GET` `/healthcheck` - returns status `200`
 - `POST` `/ticket` - this is the main endpoint. Its used to generate ticket for the provided user id:
 
-```json
-{
-    "userId":"1111111-2222-3333-4444-555555555555"
-}
-```
+    Request body:
+
+    ```json
+    {
+        "userId":"1111111-2222-3333-4444-555555555555"
+        "virtualProxyPrefix": "something" // optional. If not provided then the service will generate the ticket for the default ("/") virtual proxy
+    }
+    ```
+
+    Response:
+
+    ```json
+    {
+    "userId": "1111111-2222-3333-4444-555555555555",
+    "userDirectory": "TESTING_SOMETHING",
+    "ticket": "1234567890123456"
+    }
+    ```
 
 - `GET` `/virtualproxies` - used by the UI to return list with all possible virtual proxies
-- `GET ``/users` - used by the UI to return list with the all available test users
+- ` GET ``/users ` - used by the UI to return list with the all available test users
 
 ## UI
 
 TBA
+
+## Future
+
+Apart fom the UI the only thing that is probably outstanding is the ability to manage multiple Qlik Sense environments. At the moment the service can generate tickets only for one QS cluster and if there is a need for more clusters then the service need to be installed multiple times. Which is ok but I would like for the app be able to handle multiple clusters from one instance.
