@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API"
@@ -36,10 +37,15 @@ func (p *program) run() {
 	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
 	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
 
+	pwd, _ := os.Executable()
+	dir := filepath.Dir(pwd)
+	fs := http.FileServer(http.Dir(dir + "/static/dist"))
+
+	http.Handle("/", fs)
 	http.Handle("/healthcheck", h)
-	http.Handle("/ticket", h1)
-	http.Handle("/virtualproxies", h2)
-	http.Handle("/users", h3)
+	http.Handle("/api/ticket", h1)
+	http.Handle("/api/virtualproxies", h2)
+	http.Handle("/api/users", h3)
 	// http.HandleFunc("/temp/", api.Test)
 
 	log.Info().

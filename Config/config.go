@@ -20,6 +20,7 @@ type config struct {
 		CertificatesPath string
 		UserId           string
 		UserDirectory    string
+		DomainName       string
 		Ports            struct {
 			Repository int
 			Proxy      int

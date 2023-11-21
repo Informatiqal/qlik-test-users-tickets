@@ -3,10 +3,11 @@ port = 8081
 httpsCertificatePath = "c:/path/to/https/pem/certificates"
 
 [qlik]
-host = "qlik-host.com"
+host = "machine-name"
 certificatesPath = "c:/path/to/certificates"
 userId = "sa_api"
 userDirectory = "INTERNAL"
+domainName="sense-apr-2019"
 
 [qlik.ports]
 repository = 4242

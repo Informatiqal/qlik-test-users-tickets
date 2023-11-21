@@ -3,6 +3,7 @@ package qlik
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	sysLog "log"
 	"net/http"
@@ -22,7 +23,7 @@ type VirtualProxy struct {
 }
 
 type User struct {
-	Id            string `json:"id"`
+	UserId        string `json:"userId"`
 	UserDirectory string `json:"userDirectory"`
 	Name          string `json:"name"`
 }
@@ -32,6 +33,10 @@ type GeneratedTicket struct {
 	UserDirectory      string `json:"userDirectory"`
 	Ticket             string `json:"ticket"`
 	VirtualProxyPrefix string `json:"virtualProxyPrefix"`
+	Links              struct {
+		Qmc string `json:"qmc"`
+		Hub string `json:"hub"`
+	} `json:"links"`
 }
 
 var log zerolog.Logger
@@ -150,6 +155,8 @@ func CreateTicketForUser(
 	decoder.Decode(&responseData)
 
 	responseData.VirtualProxyPrefix = vp
+	responseData.Links.Qmc = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "qmc?qlikTicket=" + responseData.Ticket
+	responseData.Links.Hub = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
 
 	msg := fmt.Sprintf(
 		`Ticket "%s" was generated for userId %s in virtual proxy "%s"`,
@@ -206,7 +213,7 @@ func GetTestUsers() (*[]User, error) {
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
-	encoded.Set("filter", "userDirectory sw 'TEST'")
+	encoded.Set("filter", "userDirectory sw 'TESTING_'")
 
 	req, err := http.NewRequest(
 		"GET",
@@ -241,10 +248,10 @@ func GetUserDetails(userId string) (*User, error) {
 	xrfkey := util.GenerateXrfkey()
 
 	baseUrl := "https://" + config.GlobalConfig.Qlik.Host + ":4242/qrs/user"
-	baseUrl += "/" + userId
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
+	encoded.Set("filter", "(userId eq '"+userId+"')")
 
 	req, err := http.NewRequest(
 		"GET",
@@ -267,10 +274,13 @@ func GetUserDetails(userId string) (*User, error) {
 		return &t, err
 	}
 
-	var responseData User
+	var responseData []User
 
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
+	if len(responseData) == 0 {
+		return nil, errors.New("User not found")
+	}
 
-	return &responseData, nil
+	return &responseData[0], nil
 }

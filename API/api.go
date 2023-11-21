@@ -68,6 +68,7 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
@@ -95,6 +96,7 @@ func VirtualProxiesList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
@@ -122,6 +124,7 @@ func TestUsersList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
@@ -139,23 +142,3 @@ func validateUser(userId string) (bool, *qlik.User) {
 
 	return isTestUserDirectory, user
 }
-
-// func Test(w http.ResponseWriter, r *http.Request) {
-// 	userId := strings.TrimPrefix(r.URL.Path, "/temp/")
-
-// 	user, err := qlik.GetUserDetails(userId)
-
-// 	b, err := json.Marshal(&user)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		http.Error(w, "", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
-// 	_, err = w.Write(b)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// }
