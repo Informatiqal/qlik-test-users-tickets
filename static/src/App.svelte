@@ -91,7 +91,7 @@
         <button
           class:button-disabled={!generateButtonEnabled}
           on:click={() => generateTicket()}
-          disabled={!generateButtonEnabled}>Generate ticket</button
+          disabled={!generateButtonEnabled}>GENERATE TICKET</button
         >
       </generate>
       <links>
