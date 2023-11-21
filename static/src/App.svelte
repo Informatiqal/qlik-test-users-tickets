@@ -36,19 +36,27 @@
   }
 
   async function generateTicket() {
+    loaded = false;
     qmcLink = "";
     hubLink = "";
 
-    const r = await fetch("https://localhost:8081/api/ticket", {
-      method: "POST",
-      body: JSON.stringify({
-        userId: $selectedUser,
-        virtualProxyPrefix: $selectedVP,
-      }),
+    await Promise.all([
+      fetch("https://localhost:8081/api/ticket", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: $selectedUser,
+          virtualProxyPrefix: $selectedVP,
+        }),
+      })
+        .then((a) => a.json())
+        .then((ticketResponse) => {
+          qmcLink = ticketResponse.links.qmc;
+          hubLink = ticketResponse.links.hub;
+        }),
+      new Promise((resolve) => setTimeout(resolve, 1000)),
+    ]).then(() => {
+      loaded = true;
     });
-    let ticketResponse = await r.json();
-    qmcLink = ticketResponse.links.qmc;
-    hubLink = ticketResponse.links.hub;
   }
 
   async function copyToClipBoard(text) {
@@ -197,6 +205,7 @@
   .button-disabled {
     background-color: gray;
     color: lightgray;
+    cursor: not-allowed;
   }
 
   links {
