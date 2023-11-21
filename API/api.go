@@ -49,7 +49,6 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: how to pass pointer?
 	qlikTicket, err := qlik.CreateTicketForUser(
 		reqBody.User,
 		userDetails.UserDirectory,
