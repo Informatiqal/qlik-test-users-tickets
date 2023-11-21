@@ -24,3 +24,6 @@ go.work
 config.toml
 *.pem
 *.log
+resource.syso
+*.zip
+temp-build/
