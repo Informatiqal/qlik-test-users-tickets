@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API"
@@ -16,10 +15,9 @@ import (
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
 	"github.com/informatiqal/qlik-test-users-tickets/Util"
+	"github.com/informatiqal/qlik-test-users-tickets/static"
 	"github.com/kardianos/service"
 )
-
-// var serviceLogger service.Logger
 
 type program struct{}
 
@@ -39,16 +37,13 @@ func (p *program) run() {
 	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
 	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
 
-	pwd, _ := os.Executable()
-	dir := filepath.Dir(pwd)
-	fs := http.FileServer(http.Dir(dir + "/static/dist"))
+	fs := http.FileServer(frontend.BuildHTTPFS())
 
 	http.Handle("/", fs)
 	http.Handle("/healthcheck", h)
 	http.Handle("/api/ticket", h1)
 	http.Handle("/api/virtualproxies", h2)
 	http.Handle("/api/users", h3)
-	// http.HandleFunc("/temp/", api.Test)
 
 	log.Info().
 		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))

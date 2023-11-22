@@ -4,7 +4,7 @@ Backend service that can generate Qlik Sense tickets for specific test users
 
 ## UNDER DEVELOPMENT
 
-The app is still being developed. The backend is almost there but the UI is missing at the moment.
+The app is still being developed and issues might occur.
 
 ## Description
 
@@ -54,10 +54,11 @@ port = 8081 # on which port the app will server the UI
 httpsCertificatePath = "c:/path/to/https/pem/certificates" # full path to the SSL certificates
 
 [qlik]
-host = "qlik-host.com" # Qlik Sense host name
+host = "machine-name" # Qlik Sense host name
 certificatesPath = "c:/path/to/certificates" # full path to Qlik Sense certificates
 userId = "sa_api" # user id, under which the app will communicate with Qlik
 userDirectory = "INTERNAL"
+domainName = "my-qlik.com" # used to generate the QMC and Hub links once the ticket is generated
 
 [qlik.ports]
 repository = 4242 # repository api port. default is 4242
@@ -85,32 +86,48 @@ The service produces two log files in the folder where the `qlik-test-users-tick
 - `GET` `/healthcheck` - returns status `200`
 - `POST` `/ticket` - this is the main endpoint. Its used to generate ticket for the provided user id:
 
-    Request body:
+  Request body:
 
-    ```json
-    {
-        "userId":"1111111-2222-3333-4444-555555555555"
-        "virtualProxyPrefix": "something" // optional. If not provided then the service will generate the ticket for the default ("/") virtual proxy
-    }
-    ```
+  ```json
+  {
+      "userId":"1111111-2222-3333-4444-555555555555"
+      "virtualProxyPrefix": "something" // optional. If not provided then the service will generate the ticket for the default ("/") virtual proxy
+  }
+  ```
 
-    Response:
+  Response:
 
-    ```json
-    {
+  ```json
+  {
     "userId": "1111111-2222-3333-4444-555555555555",
     "userDirectory": "TESTING_SOMETHING",
-    "ticket": "1234567890123456"
+    "ticket": "1234567890123456",
+    "virtualProxyPrefix": "something",
+    "links": {
+      "qmc": "https://my-sennse.com/something/qmc?qlikTicket=1234567890123456",
+      "hub": "https://my-sennse.com/something/hub?qlikTicket=1234567890123456"
     }
-    ```
+  }
+  ```
 
 - `GET` `/virtualproxies` - used by the UI to return list with all possible virtual proxies
-- ` GET ``/users ` - used by the UI to return list with the all available test users
+- `GET` `/users` - used by the UI to return list with the all available test users
 
 ## UI
 
-TBA
+The UI itself is very simple:
+
+![UI](/assets/ui_image.png)
+
+- choose test user from the list
+- choose virtual proxy from the list
+- press "Generate ticket" button
+- get links to QMC and Hub with the ticket applied
 
 ## Future
 
-Apart fom the UI the only thing that is probably outstanding is the ability to manage multiple Qlik Sense environments. At the moment the service can generate tickets only for one QS cluster and if there is a need for more clusters then the service need to be installed multiple times. Which is ok but I would like for the app be able to handle multiple clusters from one instance.
+I would like few (major) things to be implemented in the future releases:
+
+- manage multiple Qlik Sense environments - at the moment the service can generate tickets for only one QS cluster and if there is a need for more clusters then the service have to be installed multiple times. Which is ok but I would like for the app be able to handle multiple clusters from one instance.
+- manage multiple proxy services - some QS installations have multiple proxy services enabled and used and the virtual proxies are can be linked to these different proxies. This scenario require change to the config, the UI and a bit of backend
+- attributes - the ticket generation endpoint accepts an optional property `attributes`. It will be useful (esp when talking about testing) to be able to provide additional attributes that will be associated the generated ticket. An example of attributes can be AD groups. Usually these attributes are set internally when Qlik generates the users session. But since we are using test users, that do not exists in any AD, the way to set these can be done via session/ticket attributes

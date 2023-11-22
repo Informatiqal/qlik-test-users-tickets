@@ -4,9 +4,12 @@
 
   import CopySVG from "./assets/copy.svelte";
   import LoaderSVG from "./assets/loader.svelte";
+  import GitHubSVG from "./assets/github.svelte";
+  import InfoSVG from "./assets/info.svelte";
 
   import Users from "./components/Users.svelte";
   import VirtualProxies from "./components/VirtualProxies.svelte";
+  import About from "./components/About.svelte";
 
   let users = [];
   let virtualProxies = [];
@@ -14,6 +17,7 @@
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
+  let isAboutSection = true;
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -78,8 +82,25 @@
 </script>
 
 <main>
-  <header>Test Users Ticket Generator</header>
-  {#if !loaded}
+  <header>
+    <span>Test Users Ticket Generator</span>
+    <div class="logo">
+      <span title="About" on:click={() => (isAboutSection = !isAboutSection)}
+        ><InfoSVG /></span
+      >
+      <span
+        title="Source code"
+        on:click={() =>
+          window.open(
+            "https://github.com/informatiqal/qlik-test-users-tickets",
+            "_blank"
+          )}><GitHubSVG /></span
+      >
+    </div>
+  </header>
+  {#if isAboutSection}
+    <About />
+  {:else if !loaded}
     <div class="loader">
       <LoaderSVG />
     </div>
@@ -91,7 +112,7 @@
         <button
           class:button-disabled={!generateButtonEnabled}
           on:click={() => generateTicket()}
-          disabled={!generateButtonEnabled}>Generate ticket</button
+          disabled={!generateButtonEnabled}>GENERATE TICKET</button
         >
       </generate>
       <links>
@@ -141,6 +162,25 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 5px;
+    height: 50px;
+  }
+
+  .logo {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .logo > span {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   content {
@@ -181,7 +221,6 @@
   }
 
   button {
-    /* border-radius: 8px; */
     border: 1px solid transparent;
     padding: 0.6em 1.2em;
     font-size: 1em;
@@ -191,6 +230,8 @@
     transition: border-color 0.25s;
     width: 100%;
     background-color: darkgreen;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
   }
 
   button:hover {
