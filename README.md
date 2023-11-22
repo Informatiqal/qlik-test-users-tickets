@@ -4,7 +4,7 @@ Backend service that can generate Qlik Sense tickets for specific test users
 
 ## UNDER DEVELOPMENT
 
-The app is still being developed. The backend is almost there but the UI is missing at the moment.
+The app is still being developed and issues might occur.
 
 ## Description
 

@@ -17,7 +17,7 @@
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
-  let isAboutSection = false;
+  let isAboutSection = true;
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -162,6 +162,7 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 5px;
+    height: 50px;
   }
 
   .logo {
