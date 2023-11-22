@@ -19,8 +19,8 @@ if (Test-Path -LiteralPath "./release.zip") {
     Remove-Item -LiteralPath "./release.zip" -Verbose -Recurse
 }
 
-# copy the UI to the temp release folder
-Copy-Item -Path "./static/dist" -Destination "$path/static/dist" -Force -Recurse -Verbose
+# (re)Create temp folder
+New-Item -ItemType Directory -Path $path
 
 # copy the final exe to the temp release folder
 Copy-Item -Path "./qlik-test-users-tickets.exe" -Destination "$path/qlik-test-users-tickets.exe" -Verbose
@@ -35,4 +35,4 @@ Copy-Item -Path "./LICENSE" -Destination "$path" -Verbose
 Compress-Archive -Path "$path/*" -DestinationPath "./release.zip" -Force -Verbose
 
 # remove the temp release folder
-Remove-Item -LiteralPath $path -Recurse -Verbose
+# Remove-Item -LiteralPath $path -Recurse -Verbose
