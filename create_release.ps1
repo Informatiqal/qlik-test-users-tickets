@@ -31,6 +31,9 @@ Copy-Item -Path "./README.md" -Destination "$path" -Verbose
 # copy the LICENSE to the temp release folder
 Copy-Item -Path "./LICENSE" -Destination "$path" -Verbose
 
+# copy example config file to the temp release folder
+Copy-Item -Path "./config_example.toml" -Destination "$path" -Verbose
+
 # create the release zip file
 Compress-Archive -Path "$path/*" -DestinationPath "./release.zip" -Force -Verbose
 

@@ -21,7 +21,7 @@ The generated test users:
 
 ### Executable
 
-First we'll need the [latest release](https://github.com/informatiqal/qlik-test-users-tickets/releases)
+First we'll need the [latest release](https://github.com/informatiqal/qlik-test-users-tickets/releases/latest)
 
 ### SSL Certificates
 
