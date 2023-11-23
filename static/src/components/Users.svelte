@@ -52,6 +52,7 @@
   .title {
     text-transform: uppercase;
     font-size: 18px;
+    letter-spacing: 3px;
   }
 
   .list {

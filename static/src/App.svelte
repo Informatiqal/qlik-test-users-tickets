@@ -29,6 +29,11 @@
   ];
   let attributesPlaceholder = attributesPlaceholderValues.join("");
   const options = {};
+  const toastErrorTheme = {
+    "--toastColor": "white",
+    "--toastBackground": "#ff6e64",
+    "--toastBarBackground": "darkred",
+  };
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -37,17 +42,33 @@
   }
 
   async function getUsers() {
-    const r = await fetch("https://localhost:8081/api/users", {
+    await fetch("https://localhost:8081/api/users", {
       method: "GET",
-    });
-    users = await r.json();
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        users = r;
+      })
+      .catch((e) => {
+        toast.push(e.message, {
+          theme: { ...toastErrorTheme },
+        });
+      });
   }
 
   async function getVirtualProxies() {
-    const r = await fetch("https://localhost:8081/api/virtualproxies", {
+    await fetch("https://localhost:8081/api/virtualproxies", {
       method: "GET",
-    });
-    virtualProxies = await r.json();
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        virtualProxies = r;
+      })
+      .catch((e) => {
+        toast.push(e.message, {
+          theme: { ...toastErrorTheme },
+        });
+      });
   }
 
   async function generateTicket() {
@@ -59,11 +80,7 @@
       attributes = !attributesString ? [] : JSON.parse(attributesString);
     } catch (e) {
       toast.push("Unable to parse the attributes", {
-        theme: {
-          "--toastColor": "white",
-          "--toastBackground": "#ff6e64",
-          "--toastBarBackground": "darkred",
-        },
+        theme: { ...toastErrorTheme },
       });
       return;
     }
@@ -85,7 +102,9 @@
           hubLink = ticketResponse.links.hub;
         })
         .catch((e) => {
-          //
+          toast.push(e.message, {
+            theme: { ...toastErrorTheme },
+          });
         }),
       new Promise((resolve) => setTimeout(resolve, 1000)),
     ]).then(() => {
@@ -140,7 +159,7 @@
       <users><Users {users} /></users>
       <proxies><VirtualProxies {virtualProxies} /></proxies>
       <attributes>
-        <span>Attributes</span>
+        <span class="title">Attributes</span>
         <textarea
           bind:value={attributesString}
           placeholder={attributesPlaceholder}
@@ -341,11 +360,12 @@
     padding: 5px;
   }
 
-  /* textarea:hover {
-  } */
-  
   textarea:focus {
     border: 1px solid #646cff;
     outline: none;
+  }
+
+  .title {
+    letter-spacing: 3px;
   }
 </style>
