@@ -28,8 +28,9 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CreateTicketParams struct {
-		User               string `json:"userId"`
-		VirtualProxyPrefix string `json:"virtualProxyPrefix"`
+		User               string        `json:"userId"`
+		VirtualProxyPrefix string        `json:"virtualProxyPrefix"`
+		Attributes         []interface{} `json:"attributes"`
 	}
 	var reqBody CreateTicketParams
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
@@ -49,10 +50,16 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	attributes, err := json.Marshal(reqBody.Attributes)
+	if err != nil {
+		log.Debug().Err(err).Msg("")
+	}
+
 	qlikTicket, err := qlik.CreateTicketForUser(
 		reqBody.User,
 		userDetails.UserDirectory,
 		reqBody.VirtualProxyPrefix,
+		string(attributes),
 	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

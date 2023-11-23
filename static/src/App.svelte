@@ -17,7 +17,16 @@
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
-  let isAboutSection = true;
+  let isAboutSection = false;
+  let attributes = "";
+  let attributesPlaceholderValues = [
+    "Additional attributes to be associated with the ticket.\n\n",
+    `[\n  { "group": "some group" },\n`,
+    `  { "group": "another group" },\n`,
+    `  { "otherProperty": "some value" },\n`,
+    `  ...\n]`,
+  ];
+  let attributesPlaceholder = attributesPlaceholderValues.join("");
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -43,6 +52,7 @@
     loaded = false;
     qmcLink = "";
     hubLink = "";
+    // const
 
     await Promise.all([
       fetch("https://localhost:8081/api/ticket", {
@@ -108,6 +118,10 @@
     <content>
       <users><Users {users} /></users>
       <proxies><VirtualProxies {virtualProxies} /></proxies>
+      <attributes>
+        <span>Attributes</span>
+        <textarea bind:value={attributes} placeholder={attributesPlaceholder} />
+      </attributes>
       <generate>
         <button
           class:button-disabled={!generateButtonEnabled}
@@ -185,7 +199,7 @@
 
   content {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto auto auto;
     grid-template-rows: auto auto auto;
     padding-left: 4rem;
     padding-right: 4rem;
@@ -210,14 +224,32 @@
     grid-row: 1;
   }
 
+  attributes {
+    grid-column: 3;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   generate {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 2;
   }
 
   links {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 3;
+  }
+
+  attributes > span {
+    text-transform: uppercase;
+    font-size: 18px;
+  }
+
+  attributes > textarea {
+    height: 100%;
+    resize: none;
   }
 
   button {
