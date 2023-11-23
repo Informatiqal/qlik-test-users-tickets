@@ -12,13 +12,15 @@
     </li>
   {/each}
 </ul>
-{#each items as item}
-  {#if activeTabValue == item.value}
-    <div class="box">
-      <svelte:component this={item.component} />
-    </div>
-  {/if}
-{/each}
+<div class="items">
+  {#each items as item}
+    {#if activeTabValue == item.value}
+      <div class="box">
+        <svelte:component this={item.component} />
+      </div>
+    {/if}
+  {/each}
+</div>
 
 <style>
   .box {
@@ -28,17 +30,24 @@
     border-radius: 0 0 0.5rem 0.5rem;
     border-top: 0;
   }
+
   ul {
     display: flex;
     flex-wrap: wrap;
     padding-left: 0;
     margin-bottom: 0;
     list-style: none;
+    margin-left: 2rem;
+    margin-right: 2rem;
     border-bottom: 1px solid blueviolet;
-    /* gap: 5px; */
   }
+
+  .items {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
   li {
-    /* background-color: #3f3f46; */
     margin-bottom: -1px;
   }
 
@@ -59,6 +68,5 @@
     color: #495057;
     color: white;
     background-color: blueviolet;
-    /* border-color: #dee2e6 #dee2e6 #fff; */
   }
 </style>

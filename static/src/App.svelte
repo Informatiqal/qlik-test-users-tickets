@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
-  import { selectedUser, selectedVP } from "./store";
+  import { selectedUser, selectedVP, showHideAbout } from "./store";
 
   import CopySVG from "./assets/copy.svelte";
   import LoaderSVG from "./assets/loader.svelte";
@@ -18,7 +18,7 @@
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
-  let isAboutSection = false;
+  // let isAboutSection = false;
   let attributesString = "";
   let attributesPlaceholderValues = [
     "Additional attributes to be associated with the ticket.\n\n",
@@ -135,7 +135,7 @@
   <header>
     <span>Test Users Ticket Generator</span>
     <div class="logo">
-      <span title="About" on:click={() => (isAboutSection = !isAboutSection)}
+      <span title="About" on:click={() => showHideAbout.set(!$showHideAbout)}
         ><InfoSVG /></span
       >
       <span
@@ -148,7 +148,7 @@
       >
     </div>
   </header>
-  {#if isAboutSection}
+  {#if $showHideAbout}
     <About />
   {:else if !loaded}
     <div class="loader">

@@ -1,4 +1,6 @@
 <script>
+  import { showHideAbout } from "../store";
+
   import Tab1 from "./About/Tab1.svelte";
   import Tab2 from "./About/Tab2.svelte";
   import Tab3 from "./About/Tab3.svelte";
@@ -12,19 +14,40 @@
 </script>
 
 <about>
-  <h1>INFO</h1>
-  <div>
+  <title>
+    <h1>INFO</h1>
+    <div
+      class="close-button"
+      title="Back"
+      on:click={() => showHideAbout.set(false)}
+    >
+      X
+    </div>
+  </title>
+  <tabs>
     <Tabs {items} />
-  </div>
+  </tabs>
 </about>
 
 <style>
-  about > h1 {
+  h1 {
     letter-spacing: 10px;
+    flex: 1;
   }
 
-  about > div {
-    padding-left: 2rem;
-    padding-right: 2rem;
+  title {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .close-button {
+    width: 50px;
+    align-self: center;
+    font-size: 20px;
+    font-weight: bold;
+    right: 2rem;
+    position: relative;
+    cursor: pointer;
+    text-align: end;
   }
 </style>
