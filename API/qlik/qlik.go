@@ -102,6 +102,7 @@ func CreateTicketForUser(
 	userId string,
 	userDirectory string,
 	vp string,
+	attributes string,
 ) (GeneratedTicket, error) {
 	var vpString string
 	if vp != "" {
@@ -120,9 +121,10 @@ func CreateTicketForUser(
 
 	jsonBody := []byte(
 		fmt.Sprintf(
-			`{"userId": "%s","userDirectory": "%s"}`,
+			`{"userId": "%s","userDirectory": "%s", "attributes": %s}`,
 			strings.TrimSpace(userId),
 			userDirectory,
+			attributes,
 		),
 	)
 
@@ -147,6 +149,14 @@ func CreateTicketForUser(
 		log.Error().Err(err).Msg("")
 		t := GeneratedTicket{}
 		return t, err
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		log.Error().
+			Err(err).
+			Msg("Error while generating the ticket. Proxy API responded with: " + resp.Status)
+		t := GeneratedTicket{}
+		return t, errors.New("")
 	}
 
 	var responseData GeneratedTicket

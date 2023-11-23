@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
-  import { selectedUser, selectedVP } from "./store";
+  import { SvelteToast, toast } from "@zerodevx/svelte-toast";
+  import { selectedUser, selectedVP, showHideAbout } from "./store";
 
   import CopySVG from "./assets/copy.svelte";
   import LoaderSVG from "./assets/loader.svelte";
@@ -17,7 +18,22 @@
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
-  let isAboutSection = true;
+  // let isAboutSection = false;
+  let attributesString = "";
+  let attributesPlaceholderValues = [
+    "Additional attributes to be associated with the ticket.\n\n",
+    `[\n  { "group": "some group" },\n`,
+    `  { "group": "another group" },\n`,
+    `  { "otherProperty": "some value" },\n`,
+    `  ...\n]`,
+  ];
+  let attributesPlaceholder = attributesPlaceholderValues.join("");
+  const options = {};
+  const toastErrorTheme = {
+    "--toastColor": "white",
+    "--toastBackground": "#ff6e64",
+    "--toastBarBackground": "darkred",
+  };
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -26,23 +42,50 @@
   }
 
   async function getUsers() {
-    const r = await fetch("https://localhost:8081/api/users", {
+    await fetch("https://localhost:8081/api/users", {
       method: "GET",
-    });
-    users = await r.json();
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        users = r;
+      })
+      .catch((e) => {
+        toast.push(e.message, {
+          theme: { ...toastErrorTheme },
+        });
+      });
   }
 
   async function getVirtualProxies() {
-    const r = await fetch("https://localhost:8081/api/virtualproxies", {
+    await fetch("https://localhost:8081/api/virtualproxies", {
       method: "GET",
-    });
-    virtualProxies = await r.json();
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        virtualProxies = r;
+      })
+      .catch((e) => {
+        toast.push(e.message, {
+          theme: { ...toastErrorTheme },
+        });
+      });
   }
 
   async function generateTicket() {
-    loaded = false;
     qmcLink = "";
     hubLink = "";
+    let attributes = [];
+
+    try {
+      attributes = !attributesString ? [] : JSON.parse(attributesString);
+    } catch (e) {
+      toast.push("Unable to parse the attributes", {
+        theme: { ...toastErrorTheme },
+      });
+      return;
+    }
+
+    loaded = false;
 
     await Promise.all([
       fetch("https://localhost:8081/api/ticket", {
@@ -50,12 +93,18 @@
         body: JSON.stringify({
           userId: $selectedUser,
           virtualProxyPrefix: $selectedVP,
+          attributes,
         }),
       })
         .then((a) => a.json())
         .then((ticketResponse) => {
           qmcLink = ticketResponse.links.qmc;
           hubLink = ticketResponse.links.hub;
+        })
+        .catch((e) => {
+          toast.push(e.message, {
+            theme: { ...toastErrorTheme },
+          });
         }),
       new Promise((resolve) => setTimeout(resolve, 1000)),
     ]).then(() => {
@@ -82,10 +131,11 @@
 </script>
 
 <main>
+  <SvelteToast {options} />
   <header>
     <span>Test Users Ticket Generator</span>
     <div class="logo">
-      <span title="About" on:click={() => (isAboutSection = !isAboutSection)}
+      <span title="About" on:click={() => showHideAbout.set(!$showHideAbout)}
         ><InfoSVG /></span
       >
       <span
@@ -98,7 +148,7 @@
       >
     </div>
   </header>
-  {#if isAboutSection}
+  {#if $showHideAbout}
     <About />
   {:else if !loaded}
     <div class="loader">
@@ -108,6 +158,13 @@
     <content>
       <users><Users {users} /></users>
       <proxies><VirtualProxies {virtualProxies} /></proxies>
+      <attributes>
+        <span class="title">Attributes</span>
+        <textarea
+          bind:value={attributesString}
+          placeholder={attributesPlaceholder}
+        />
+      </attributes>
       <generate>
         <button
           class:button-disabled={!generateButtonEnabled}
@@ -163,6 +220,7 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     height: 50px;
+    /* color: #ff6e64; */
   }
 
   .logo {
@@ -185,7 +243,7 @@
 
   content {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto auto auto;
     grid-template-rows: auto auto auto;
     padding-left: 4rem;
     padding-right: 4rem;
@@ -210,14 +268,32 @@
     grid-row: 1;
   }
 
+  attributes {
+    grid-column: 3;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   generate {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 2;
   }
 
   links {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 3;
+  }
+
+  attributes > span {
+    text-transform: uppercase;
+    font-size: 18px;
+  }
+
+  attributes > textarea {
+    height: 100%;
+    resize: none;
   }
 
   button {
@@ -276,5 +352,20 @@
 
   .copy {
     cursor: pointer;
+  }
+
+  textarea {
+    border: 1px solid gray;
+    border-top-right-radius: 8px;
+    padding: 5px;
+  }
+
+  textarea:focus {
+    border: 1px solid #646cff;
+    outline: none;
+  }
+
+  .title {
+    letter-spacing: 3px;
   }
 </style>

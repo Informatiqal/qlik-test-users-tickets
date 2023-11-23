@@ -23,3 +23,15 @@ function createVP() {
 }
 
 export const selectedVP = createVP();
+
+function showHideAboutMethod() {
+  const { subscribe, set, update } = writable(false);
+
+  return {
+    subscribe,
+    set: (value) => update(() => value),
+    reset: () => set(undefined),
+  };
+}
+
+export const showHideAbout = showHideAboutMethod();
