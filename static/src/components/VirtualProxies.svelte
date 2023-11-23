@@ -30,7 +30,6 @@
 
 <style>
   .vp {
-    /* background-color: #3f3f46; */
     cursor: pointer;
     padding: 0.5rem;
     text-align: left;
@@ -60,7 +59,6 @@
     max-height: 300px;
     min-height: 300px;
     background-color: #3f3f46;
-    border-top-right-radius: 8px;
     overflow: auto;
   }
 </style>

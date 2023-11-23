@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { SvelteToast, toast } from "@zerodevx/svelte-toast";
   import { selectedUser, selectedVP } from "./store";
 
   import CopySVG from "./assets/copy.svelte";
@@ -18,7 +19,7 @@
   let hubLink = "";
   let generateButtonEnabled = false;
   let isAboutSection = false;
-  let attributes = "";
+  let attributesString = "";
   let attributesPlaceholderValues = [
     "Additional attributes to be associated with the ticket.\n\n",
     `[\n  { "group": "some group" },\n`,
@@ -27,6 +28,7 @@
     `  ...\n]`,
   ];
   let attributesPlaceholder = attributesPlaceholderValues.join("");
+  const options = {};
 
   $: if ($selectedUser && $selectedVP) {
     generateButtonEnabled = true;
@@ -49,10 +51,24 @@
   }
 
   async function generateTicket() {
-    loaded = false;
     qmcLink = "";
     hubLink = "";
-    // const
+    let attributes = [];
+
+    try {
+      attributes = !attributesString ? [] : JSON.parse(attributesString);
+    } catch (e) {
+      toast.push("Unable to parse the attributes", {
+        theme: {
+          "--toastColor": "white",
+          "--toastBackground": "#ff6e64",
+          "--toastBarBackground": "darkred",
+        },
+      });
+      return;
+    }
+
+    loaded = false;
 
     await Promise.all([
       fetch("https://localhost:8081/api/ticket", {
@@ -60,12 +76,16 @@
         body: JSON.stringify({
           userId: $selectedUser,
           virtualProxyPrefix: $selectedVP,
+          attributes,
         }),
       })
         .then((a) => a.json())
         .then((ticketResponse) => {
           qmcLink = ticketResponse.links.qmc;
           hubLink = ticketResponse.links.hub;
+        })
+        .catch((e) => {
+          //
         }),
       new Promise((resolve) => setTimeout(resolve, 1000)),
     ]).then(() => {
@@ -92,6 +112,7 @@
 </script>
 
 <main>
+  <SvelteToast {options} />
   <header>
     <span>Test Users Ticket Generator</span>
     <div class="logo">
@@ -120,7 +141,10 @@
       <proxies><VirtualProxies {virtualProxies} /></proxies>
       <attributes>
         <span>Attributes</span>
-        <textarea bind:value={attributes} placeholder={attributesPlaceholder} />
+        <textarea
+          bind:value={attributesString}
+          placeholder={attributesPlaceholder}
+        />
       </attributes>
       <generate>
         <button
@@ -177,6 +201,7 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     height: 50px;
+    /* color: #ff6e64; */
   }
 
   .logo {
@@ -308,5 +333,19 @@
 
   .copy {
     cursor: pointer;
+  }
+
+  textarea {
+    border: 1px solid gray;
+    border-top-right-radius: 8px;
+    padding: 5px;
+  }
+
+  /* textarea:hover {
+  } */
+  
+  textarea:focus {
+    border: 1px solid #646cff;
+    outline: none;
   }
 </style>
