@@ -29,7 +29,6 @@
 
 <style>
   .user {
-    /* background-color: #3f3f46; */
     cursor: pointer;
     padding: 0.5rem;
     text-align: left;
@@ -53,6 +52,7 @@
   .title {
     text-transform: uppercase;
     font-size: 18px;
+    letter-spacing: 3px;
   }
 
   .list {
