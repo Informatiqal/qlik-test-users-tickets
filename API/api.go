@@ -110,6 +110,34 @@ func VirtualProxiesList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ProxyServiceList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method is not supported.", http.StatusNotFound)
+		return
+	}
+
+	proxyServices, err := qlik.GetProxyServices()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	b, err := json.Marshal(&proxyServices)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(b)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func TestUsersList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported.", http.StatusNotFound)
