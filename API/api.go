@@ -82,19 +82,19 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func VirtualProxiesList(w http.ResponseWriter, r *http.Request) {
+func ProxyServiceList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported.", http.StatusNotFound)
 		return
 	}
 
-	virtualProxies, err := qlik.GetVirtualProxies()
+	proxyServices, err := qlik.GetProxyServices()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	b, err := json.Marshal(&virtualProxies)
+	b, err := json.Marshal(&proxyServices)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "", http.StatusInternalServerError)

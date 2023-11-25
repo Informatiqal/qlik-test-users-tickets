@@ -34,7 +34,7 @@ func (p *program) run() {
 
 	h := logger.Chain.Then(http.HandlerFunc(api.HealthCheckHandler))
 	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
-	h2 := logger.Chain.Then(http.HandlerFunc(api.VirtualProxiesList))
+	h2 := logger.Chain.Then(http.HandlerFunc(api.ProxyServiceList))
 	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
 
 	fs := http.FileServer(frontend.BuildHTTPFS())
@@ -42,7 +42,7 @@ func (p *program) run() {
 	http.Handle("/", fs)
 	http.Handle("/healthcheck", h)
 	http.Handle("/api/ticket", h1)
-	http.Handle("/api/virtualproxies", h2)
+	http.Handle("/api/proxies", h2)
 	http.Handle("/api/users", h3)
 
 	log.Info().

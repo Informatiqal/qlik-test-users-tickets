@@ -17,9 +17,25 @@ import (
 )
 
 type VirtualProxy struct {
-	Id          string `json:"id"`
+	// Id          string `json:"id"`
 	Description string `json:"description"`
 	Prefix      string `json:"prefix"`
+}
+
+type ProxyServiceRaw struct {
+	Id                      string `json:"id"`
+	ServerNodeConfiguration struct {
+		Name string `json:"name"`
+	} `json:"serverNodeConfiguration"`
+	Settings struct {
+		VirtualProxies []VirtualProxy `json:"virtualProxies"`
+	} `json:"settings"`
+}
+
+type ProxyService struct {
+	Id             string         `json:"id"`
+	Name           string         `json:"name"`
+	VirtualProxies []VirtualProxy `json:"virtualProxies"`
 }
 
 type User struct {
@@ -214,6 +230,55 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 	decoder.Decode(&responseData)
 
 	return &responseData, nil
+}
+
+func GetProxyServices() (*[]ProxyService, error) {
+	xrfkey := util.GenerateXrfkey()
+	url := fmt.Sprintf(
+		"https://%s:4242/qrs/proxyservice/full?Xrfkey=%s",
+		config.GlobalConfig.Qlik.Host,
+		xrfkey,
+	)
+
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		http.NoBody,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := []ProxyService{}
+		return &t, err
+	}
+
+	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	resp, err := config.QlikClient.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := []ProxyService{}
+		return &t, err
+	}
+
+	var responseData []ProxyServiceRaw
+
+	decoder := json.NewDecoder(resp.Body)
+	decoder.Decode(&responseData)
+
+	var apiData []ProxyService
+
+	for i := 0; i < len(responseData); i++ {
+		p := ProxyService{
+			Id:             responseData[i].Id,
+			Name:           responseData[i].ServerNodeConfiguration.Name,
+			VirtualProxies: responseData[i].Settings.VirtualProxies,
+		}
+
+		apiData = append(apiData, p)
+	}
+
+	return &apiData, nil
 }
 
 func GetTestUsers() (*[]User, error) {
