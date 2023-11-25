@@ -25,7 +25,8 @@ type VirtualProxy struct {
 type ProxyServiceRaw struct {
 	Id                      string `json:"id"`
 	ServerNodeConfiguration struct {
-		Name string `json:"name"`
+		Name     string `json:"name"`
+		HostName string `json:"hostName"`
 	} `json:"serverNodeConfiguration"`
 	Settings struct {
 		VirtualProxies []VirtualProxy `json:"virtualProxies"`
@@ -119,6 +120,7 @@ func CreateTicketForUser(
 	userDirectory string,
 	vp string,
 	attributes string,
+	proxyId string,
 ) (GeneratedTicket, error) {
 	var vpString string
 	if vp != "" {
@@ -127,10 +129,17 @@ func CreateTicketForUser(
 		vpString = ""
 	}
 
+	proxyService, err := getProxyService(proxyId)
+	if err != nil {
+		log.Error().Err(err).Msg("Proxy service id not found")
+		t := GeneratedTicket{}
+		return t, err
+	}
+
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
 		"https://%s:4243/qps/%sticket?Xrfkey=%s",
-		config.GlobalConfig.Qlik.Host,
+		proxyService.ServerNodeConfiguration.HostName,
 		vpString,
 		xrfkey,
 	)
@@ -358,4 +367,48 @@ func GetUserDetails(userId string) (*User, error) {
 	}
 
 	return &responseData[0], nil
+}
+
+func getProxyService(id string) (*ProxyServiceRaw, error) {
+	xrfkey := util.GenerateXrfkey()
+	url := fmt.Sprintf(
+		"https://%s:4242/qrs/proxyservice/%s?Xrfkey=%s",
+		config.GlobalConfig.Qlik.Host,
+		id,
+		xrfkey,
+	)
+
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		http.NoBody,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := ProxyServiceRaw{}
+		return &t, err
+	}
+
+	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	resp, err := config.QlikClient.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := ProxyServiceRaw{}
+		return &t, err
+	}
+
+	if resp.StatusCode == 404 {
+		log.Error().Err(err).Msg("ProxyService not found!" + id)
+		t := ProxyServiceRaw{}
+		return &t, errors.New("ProxyService not found")
+	}
+
+	var responseData ProxyServiceRaw
+
+	decoder := json.NewDecoder(resp.Body)
+	decoder.Decode(&responseData)
+
+	return &responseData, nil
 }

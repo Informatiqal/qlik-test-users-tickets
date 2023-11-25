@@ -31,7 +31,9 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 		User               string        `json:"userId"`
 		VirtualProxyPrefix string        `json:"virtualProxyPrefix"`
 		Attributes         []interface{} `json:"attributes"`
+		ProxyId            string        `json:"proxyId"`
 	}
+
 	var reqBody CreateTicketParams
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
 	if err != nil {
@@ -41,6 +43,11 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 
 	if reqBody.User == "" {
 		http.Error(w, "\"user\" value is mandatory", http.StatusBadRequest)
+		return
+	}
+
+	if reqBody.ProxyId == "" {
+		http.Error(w, "\"proxyId\" value is mandatory", http.StatusBadRequest)
 		return
 	}
 
@@ -60,9 +67,11 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 		userDetails.UserDirectory,
 		reqBody.VirtualProxyPrefix,
 		string(attributes),
+		reqBody.ProxyId,
 	)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, err.Error())
 		return
 	}
 
@@ -73,7 +82,7 @@ func GenerateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
@@ -90,7 +99,7 @@ func ProxyServiceList(w http.ResponseWriter, r *http.Request) {
 
 	proxyServices, err := qlik.GetProxyServices()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -118,7 +127,7 @@ func TestUsersList(w http.ResponseWriter, r *http.Request) {
 
 	users, err := qlik.GetTestUsers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
