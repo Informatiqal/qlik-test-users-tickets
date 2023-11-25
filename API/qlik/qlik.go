@@ -17,7 +17,7 @@ import (
 )
 
 type VirtualProxy struct {
-	Id          string `json:"id"`
+	// Id          string `json:"id"`
 	Description string `json:"description"`
 	Prefix      string `json:"prefix"`
 }
@@ -33,9 +33,9 @@ type ProxyServiceRaw struct {
 }
 
 type ProxyService struct {
-	Id             string
-	Name           string
-	VirtualProxies []VirtualProxy
+	Id             string         `json:"id"`
+	Name           string         `json:"name"`
+	VirtualProxies []VirtualProxy `json:"virtualProxies"`
 }
 
 type User struct {
