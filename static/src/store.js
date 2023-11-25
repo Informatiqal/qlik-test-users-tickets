@@ -24,6 +24,18 @@ function createVP() {
 
 export const selectedVP = createVP();
 
+function createProxy() {
+  const { subscribe, set, update } = writable(undefined);
+
+  return {
+    subscribe,
+    select: (value) => update(() => value),
+    reset: () => set(undefined),
+  };
+}
+
+export const selectedProxy = createProxy();
+
 function showHideAboutMethod() {
   const { subscribe, set, update } = writable(false);
 

@@ -1,7 +1,12 @@
 <script>
   import { onMount } from "svelte";
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
-  import { selectedUser, selectedVP, showHideAbout } from "./store";
+  import {
+    selectedProxy,
+    selectedUser,
+    selectedVP,
+    showHideAbout,
+  } from "./store";
 
   import CopySVG from "./assets/copy.svelte";
   import LoaderSVG from "./assets/loader.svelte";
@@ -11,14 +16,16 @@
   import Users from "./components/Users.svelte";
   import VirtualProxies from "./components/VirtualProxies.svelte";
   import About from "./components/About.svelte";
+  import Proxies from "./components/Proxies.svelte";
 
   let users = [];
   let virtualProxies = [];
+  let proxies = [];
   let loaded = false;
   let qmcLink = "";
   let hubLink = "";
   let generateButtonEnabled = false;
-  // let isAboutSection = false;
+  let generateButtonTitle = "";
   let attributesString = "";
   let attributesPlaceholderValues = [
     "Additional attributes to be associated with the ticket.\n\n",
@@ -35,10 +42,23 @@
     "--toastBarBackground": "darkred",
   };
 
-  $: if ($selectedUser && $selectedVP) {
+  $: if ($selectedUser && $selectedVP != undefined) {
     generateButtonEnabled = true;
   } else {
     generateButtonEnabled = false;
+  }
+
+  $: if ($selectedProxy) {
+    virtualProxies = proxies.filter((p) => p.id == $selectedProxy)[0]
+      .virtualProxies;
+  } else {
+    virtualProxies = [];
+  }
+
+  $: if (!generateButtonEnabled) {
+    generateButtonTitle = "Select User, Proxy and Virtual Proxy values";
+  } else {
+    generateButtonTitle = "Generate";
   }
 
   async function getUsers() {
@@ -56,13 +76,16 @@
       });
   }
 
-  async function getVirtualProxies() {
-    await fetch("https://localhost:8081/api/virtualproxies", {
+  async function getProxies() {
+    await fetch("https://localhost:8081/api/proxies", {
       method: "GET",
     })
       .then((r) => r.json())
       .then((r) => {
-        virtualProxies = r;
+        proxies = r;
+
+        // pre-select the proxy if there is only one available
+        // if (proxies.length == 1) selectedProxy.select(proxies[0].id);
       })
       .catch((e) => {
         toast.push(e.message, {
@@ -93,6 +116,7 @@
         body: JSON.stringify({
           userId: $selectedUser,
           virtualProxyPrefix: $selectedVP,
+          proxyId: $selectedProxy,
           attributes,
         }),
       })
@@ -124,7 +148,7 @@
   onMount(async () => {
     await Promise.all([
       getUsers(),
-      getVirtualProxies(),
+      getProxies(),
       new Promise((resolve) => setTimeout(resolve, 1000)),
     ]).then(() => (loaded = true));
   });
@@ -157,7 +181,8 @@
   {:else}
     <content>
       <users><Users {users} /></users>
-      <proxies><VirtualProxies {virtualProxies} /></proxies>
+      <proxies><Proxies {proxies} /></proxies>
+      <virtual-proxies><VirtualProxies {virtualProxies} /></virtual-proxies>
       <attributes>
         <span class="title">Attributes</span>
         <textarea
@@ -169,6 +194,7 @@
         <button
           class:button-disabled={!generateButtonEnabled}
           on:click={() => generateTicket()}
+          title={generateButtonTitle}
           disabled={!generateButtonEnabled}>GENERATE TICKET</button
         >
       </generate>
@@ -243,7 +269,7 @@
 
   content {
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: 25% 25% 25% 25%;
     grid-template-rows: auto auto auto;
     padding-left: 4rem;
     padding-right: 4rem;
@@ -268,8 +294,13 @@
     grid-row: 1;
   }
 
-  attributes {
+  virtual-proxies {
     grid-column: 3;
+    grid-row: 1;
+  }
+
+  attributes {
+    grid-column: 4;
     grid-row: 1;
     display: flex;
     flex-direction: column;
@@ -277,12 +308,12 @@
   }
 
   generate {
-    grid-column: 1 / span 3;
+    grid-column: 1 / span 4;
     grid-row: 2;
   }
 
   links {
-    grid-column: 1 / span 3;
+    grid-column: 1 / span 4;
     grid-row: 3;
   }
 
