@@ -36,6 +36,7 @@ type ProxyServiceRaw struct {
 type ProxyService struct {
 	Id             string         `json:"id"`
 	Name           string         `json:"name"`
+	HostName       string         `json:"hostName"`
 	VirtualProxies []VirtualProxy `json:"virtualProxies"`
 }
 
@@ -194,10 +195,11 @@ func CreateTicketForUser(
 	responseData.Links.Hub = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
 
 	msg := fmt.Sprintf(
-		`Ticket "%s" was generated for userId %s in virtual proxy "%s"`,
+		`Ticket "%s" was generated for userId "%s" in virtual proxy "%s" on proxy node "%s"`,
 		responseData.Ticket,
 		userId,
 		vp,
+		proxyService.ServerNodeConfiguration.HostName,
 	)
 	log.Info().Msg(msg)
 
@@ -243,15 +245,18 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 
 func GetProxyServices() (*[]ProxyService, error) {
 	xrfkey := util.GenerateXrfkey()
-	url := fmt.Sprintf(
-		"https://%s:4242/qrs/proxyservice/full?Xrfkey=%s",
+	baseUrl := fmt.Sprintf(
+		"https://%s:4242/qrs/ProxyService/full",
 		config.GlobalConfig.Qlik.Host,
-		xrfkey,
 	)
+
+	encoded := url.Values{}
+	encoded.Set("Xrfkey", xrfkey)
+	encoded.Set("filter", "(serverNodeConfiguration.proxyEnabled eq True)")
 
 	req, err := http.NewRequest(
 		"GET",
-		url,
+		fmt.Sprintf("%s?%s", baseUrl, encoded.Encode()),
 		http.NoBody,
 	)
 	if err != nil {
@@ -275,12 +280,13 @@ func GetProxyServices() (*[]ProxyService, error) {
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
 
-	var apiData []ProxyService
+	var apiData []ProxyService = []ProxyService{}
 
 	for i := 0; i < len(responseData); i++ {
 		p := ProxyService{
 			Id:             responseData[i].Id,
 			Name:           responseData[i].ServerNodeConfiguration.Name,
+			HostName:       responseData[i].ServerNodeConfiguration.HostName,
 			VirtualProxies: responseData[i].Settings.VirtualProxies,
 		}
 

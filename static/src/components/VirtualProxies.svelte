@@ -1,5 +1,5 @@
 <script>
-  import { selectedVP } from "../store";
+  import { selectedVP, selectedProxy } from "../store";
 
   export let virtualProxies;
 
@@ -14,17 +14,23 @@
 </script>
 
 <div class="content">
-  <div class="title">Available virtual proxies</div>
+  <div class="title">Virtual proxies</div>
   <div class="list">
-    {#each virtualProxies as vp}
-      <div
-        class="vp"
-        class:selected={$selectedVP == vp.prefix}
-        on:click={() => selectUser(vp.prefix)}
-      >
-        {vp.description} ({vp.prefix ? vp.prefix : "/"})
+    {#if $selectedProxy}
+      {#each virtualProxies as vp}
+        <div
+          class="vp"
+          class:selected={$selectedVP == vp.prefix}
+          on:click={() => selectUser(vp.prefix)}
+        >
+          {vp.description} ({vp.prefix ? vp.prefix : "/"})
+        </div>
+      {/each}
+    {:else}
+      <div class="no-proxy">
+        <div>Please select proxy service first</div>
       </div>
-    {/each}
+    {/if}
   </div>
 </div>
 
@@ -61,5 +67,13 @@
     min-height: 300px;
     background-color: #3f3f46;
     overflow: auto;
+  }
+
+  .no-proxy {
+    display: flex;
+    max-height: 300px;
+    min-height: 300px;
+    align-items: center;
+    justify-content: center;
   }
 </style>

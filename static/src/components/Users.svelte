@@ -13,7 +13,7 @@
 </script>
 
 <div class="content">
-  <div class="title">Available test users</div>
+  <div class="title">Test users</div>
   <div class="list">
     {#each users as user}
       <div
