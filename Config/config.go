@@ -21,13 +21,7 @@ type config struct {
 		UserId           string
 		UserDirectory    string
 		DomainName       string
-		Ports            struct {
-			Repository int
-			Proxy      int
-		}
-	}
-	TestUsers struct {
-		UserDirectory string
+		RepositoryHost   string
 	}
 }
 
