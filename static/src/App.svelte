@@ -85,7 +85,7 @@
         proxies = r;
 
         // pre-select the proxy if there is only one available
-        // if (proxies.length == 1) selectedProxy.select(proxies[0].id);
+        if (proxies.length == 1) selectedProxy.select(proxies[0].id);
       })
       .catch((e) => {
         toast.push(e.message, {
