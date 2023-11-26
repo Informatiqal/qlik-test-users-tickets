@@ -22,6 +22,7 @@ type config struct {
 		UserDirectory    string
 		DomainName       string
 		RepositoryHost   string
+		DomainMapping    map[string]string
 	}
 }
 
@@ -35,12 +36,12 @@ func NewConfig() {
 
 	configContent, readError := os.ReadFile(dir + "/config.toml")
 	if readError != nil {
-		log.Fatal().Err(readError).Msg("")
+		log.Fatal().Err(readError).Msg(readError.Error())
 	}
 
 	parseError := toml.Unmarshal([]byte(configContent), &GlobalConfig)
 	if parseError != nil {
-		log.Fatal().Err(readError).Msg("")
+		log.Fatal().Err(readError).Msg(parseError.Error())
 	}
 
 	if GlobalConfig.Server.HttpsCertificatePath == "" {

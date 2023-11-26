@@ -116,6 +116,7 @@ func CreateTestUsers(
 	return true
 }
 
+// TODO: this should just create ticket and nothing more (refactor)
 func CreateTicketForUser(
 	userId string,
 	userDirectory string,
@@ -190,9 +191,11 @@ func CreateTicketForUser(
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
 
+	presentationUrl := getPresentationUrl(proxyService.ServerNodeConfiguration.HostName)
+
 	responseData.VirtualProxyPrefix = vp
-	responseData.Links.Qmc = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "qmc?qlikTicket=" + responseData.Ticket
-	responseData.Links.Hub = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
+	responseData.Links.Qmc = "https://" + presentationUrl + "/" + vpString + "qmc?qlikTicket=" + responseData.Ticket
+	responseData.Links.Hub = "https://" + presentationUrl + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
 
 	msg := fmt.Sprintf(
 		`Ticket "%s" was generated for userId "%s" in virtual proxy "%s" on proxy node "%s"`,
@@ -417,4 +420,14 @@ func getProxyService(id string) (*ProxyServiceRaw, error) {
 	decoder.Decode(&responseData)
 
 	return &responseData, nil
+}
+
+func getPresentationUrl(machineName string) string {
+	prettyName := config.GlobalConfig.Qlik.DomainMapping[machineName]
+
+	if prettyName == "" {
+		return machineName
+	}
+
+	return prettyName
 }
