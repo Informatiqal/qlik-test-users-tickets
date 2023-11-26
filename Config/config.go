@@ -20,7 +20,6 @@ type config struct {
 		CertificatesPath string
 		UserId           string
 		UserDirectory    string
-		DomainName       string
 		RepositoryHost   string
 		DomainMapping    map[string]string
 	}
@@ -44,8 +43,19 @@ func NewConfig() {
 		log.Fatal().Err(readError).Msg(parseError.Error())
 	}
 
+	if GlobalConfig.Server.Port == 0 {
+		GlobalConfig.Server.Port = 8081
+		log.Warn().Msg("Port value was not provided in the config! Using default 8081")
+	}
+
 	if GlobalConfig.Server.HttpsCertificatePath == "" {
 		log.Fatal().Err(readError).Msg("Certificate path should be provided")
+	}
+
+	// if userId is not provided use the default INTERNAL\sa_api
+	if GlobalConfig.Qlik.UserId == "" {
+		GlobalConfig.Qlik.UserId = "sa_api"
+		GlobalConfig.Qlik.UserDirectory = "INTERNAL"
 	}
 
 	setQlikHttpClient()
