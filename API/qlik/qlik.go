@@ -210,7 +210,7 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
 		"https://%s:4242/qrs/virtualproxyconfig?Xrfkey=%s",
-		config.GlobalConfig.Qlik.Host,
+		config.GlobalConfig.Qlik.RepositoryHost,
 		xrfkey,
 	)
 
@@ -247,7 +247,7 @@ func GetProxyServices() (*[]ProxyService, error) {
 	xrfkey := util.GenerateXrfkey()
 	baseUrl := fmt.Sprintf(
 		"https://%s:4242/qrs/ProxyService/full",
-		config.GlobalConfig.Qlik.Host,
+		config.GlobalConfig.Qlik.RepositoryHost,
 	)
 
 	encoded := url.Values{}
@@ -299,7 +299,7 @@ func GetProxyServices() (*[]ProxyService, error) {
 func GetTestUsers() (*[]User, error) {
 	xrfkey := util.GenerateXrfkey()
 
-	baseUrl := "https://" + config.GlobalConfig.Qlik.Host + ":4242/qrs/user"
+	baseUrl := "https://" + config.GlobalConfig.Qlik.RepositoryHost + ":4242/qrs/user"
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
@@ -337,7 +337,7 @@ func GetTestUsers() (*[]User, error) {
 func GetUserDetails(userId string) (*User, error) {
 	xrfkey := util.GenerateXrfkey()
 
-	baseUrl := "https://" + config.GlobalConfig.Qlik.Host + ":4242/qrs/user"
+	baseUrl := "https://" + config.GlobalConfig.Qlik.RepositoryHost + ":4242/qrs/user"
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
@@ -379,7 +379,7 @@ func getProxyService(id string) (*ProxyServiceRaw, error) {
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
 		"https://%s:4242/qrs/proxyservice/%s?Xrfkey=%s",
-		config.GlobalConfig.Qlik.Host,
+		config.GlobalConfig.Qlik.RepositoryHost,
 		id,
 		xrfkey,
 	)
