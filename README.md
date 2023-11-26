@@ -90,7 +90,8 @@ The service produces two log files in the folder where the `qlik-test-users-tick
 
   ```json
   {
-      "userId":"1111111-2222-3333-4444-555555555555"
+      "userId": "1111111-2222-3333-4444-555555555555"
+      "proxyId": "6666666-7777-8888-9999-000000000000" // id of the proxy service. The ticket will be generated on the host that is behind that proxy service
       "virtualProxyPrefix": "something" // optional. If not provided then the service will generate the ticket for the default ("/") virtual proxy
   }
   ```
@@ -110,7 +111,7 @@ The service produces two log files in the folder where the `qlik-test-users-tick
   }
   ```
 
-- `GET` `/virtualproxies` - used by the UI to return list with all possible virtual proxies
+- `GET` `/proxies` - used by the UI to return list with all active proxies and their virtual proxies
 - `GET` `/users` - used by the UI to return list with the all available test users
 
 ## UI
@@ -120,7 +121,8 @@ The UI itself is very simple:
 ![UI](/assets/ui_image.png)
 
 - choose test user from the list
-- choose virtual proxy from the list
+- choose proxy from the list
+- choose virtual proxy from the list (after proxy is selected)
 - press "Generate ticket" button
 - get links to QMC and Hub with the ticket applied
 
@@ -129,5 +131,5 @@ The UI itself is very simple:
 I would like few (major) things to be implemented in the future releases:
 
 - manage multiple Qlik Sense environments - at the moment the service can generate tickets for only one QS cluster and if there is a need for more clusters then the service have to be installed multiple times. Which is ok but I would like for the app be able to handle multiple clusters from one instance.
-- manage multiple proxy services - some QS installations have multiple proxy services enabled and used and the virtual proxies are can be linked to these different proxies. This scenario require change to the config, the UI and a bit of backend
+- **implemented** ~~manage multiple proxy services - some QS installations have multiple proxy services enabled and used and the virtual proxies are can be linked to these different proxies. This scenario require change to the config, the UI and a bit of backend~~
 - **implemented** ~~attributes - the ticket generation endpoint accepts an optional property `attributes`. It will be useful (esp when talking about testing) to be able to provide additional attributes that will be associated the generated ticket. An example of attributes can be AD groups. Usually these attributes are set internally when Qlik generates the users session. But since we are using test users, that do not exists in any AD, the way to set these can be done via session/ticket attributes~~
