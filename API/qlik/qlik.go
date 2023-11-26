@@ -17,9 +17,27 @@ import (
 )
 
 type VirtualProxy struct {
-	Id          string `json:"id"`
+	// Id          string `json:"id"`
 	Description string `json:"description"`
 	Prefix      string `json:"prefix"`
+}
+
+type ProxyServiceRaw struct {
+	Id                      string `json:"id"`
+	ServerNodeConfiguration struct {
+		Name     string `json:"name"`
+		HostName string `json:"hostName"`
+	} `json:"serverNodeConfiguration"`
+	Settings struct {
+		VirtualProxies []VirtualProxy `json:"virtualProxies"`
+	} `json:"settings"`
+}
+
+type ProxyService struct {
+	Id             string         `json:"id"`
+	Name           string         `json:"name"`
+	HostName       string         `json:"hostName"`
+	VirtualProxies []VirtualProxy `json:"virtualProxies"`
 }
 
 type User struct {
@@ -98,11 +116,13 @@ func CreateTestUsers(
 	return true
 }
 
+// TODO: this should just create ticket and nothing more (refactor)
 func CreateTicketForUser(
 	userId string,
 	userDirectory string,
 	vp string,
 	attributes string,
+	proxyId string,
 ) (GeneratedTicket, error) {
 	var vpString string
 	if vp != "" {
@@ -111,10 +131,17 @@ func CreateTicketForUser(
 		vpString = ""
 	}
 
+	proxyService, err := getProxyService(proxyId)
+	if err != nil {
+		log.Error().Err(err).Msg("Proxy service id not found")
+		t := GeneratedTicket{}
+		return t, err
+	}
+
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
 		"https://%s:4243/qps/%sticket?Xrfkey=%s",
-		config.GlobalConfig.Qlik.Host,
+		proxyService.ServerNodeConfiguration.HostName,
 		vpString,
 		xrfkey,
 	)
@@ -164,15 +191,18 @@ func CreateTicketForUser(
 	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&responseData)
 
+	presentationUrl := getPresentationUrl(proxyService.ServerNodeConfiguration.HostName)
+
 	responseData.VirtualProxyPrefix = vp
-	responseData.Links.Qmc = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "qmc?qlikTicket=" + responseData.Ticket
-	responseData.Links.Hub = "https://" + config.GlobalConfig.Qlik.DomainName + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
+	responseData.Links.Qmc = "https://" + presentationUrl + "/" + vpString + "qmc?qlikTicket=" + responseData.Ticket
+	responseData.Links.Hub = "https://" + presentationUrl + "/" + vpString + "hub?qlikTicket=" + responseData.Ticket
 
 	msg := fmt.Sprintf(
-		`Ticket "%s" was generated for userId %s in virtual proxy "%s"`,
+		`Ticket "%s" was generated for userId "%s" in virtual proxy "%s" on proxy node "%s"`,
 		responseData.Ticket,
 		userId,
 		vp,
+		proxyService.ServerNodeConfiguration.HostName,
 	)
 	log.Info().Msg(msg)
 
@@ -183,7 +213,7 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
 		"https://%s:4242/qrs/virtualproxyconfig?Xrfkey=%s",
-		config.GlobalConfig.Qlik.Host,
+		config.GlobalConfig.Qlik.RepositoryHost,
 		xrfkey,
 	)
 
@@ -216,10 +246,63 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 	return &responseData, nil
 }
 
+func GetProxyServices() (*[]ProxyService, error) {
+	xrfkey := util.GenerateXrfkey()
+	baseUrl := fmt.Sprintf(
+		"https://%s:4242/qrs/ProxyService/full",
+		config.GlobalConfig.Qlik.RepositoryHost,
+	)
+
+	encoded := url.Values{}
+	encoded.Set("Xrfkey", xrfkey)
+	encoded.Set("filter", "(serverNodeConfiguration.proxyEnabled eq True)")
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s?%s", baseUrl, encoded.Encode()),
+		http.NoBody,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := []ProxyService{}
+		return &t, err
+	}
+
+	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	resp, err := config.QlikClient.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := []ProxyService{}
+		return &t, err
+	}
+
+	var responseData []ProxyServiceRaw
+
+	decoder := json.NewDecoder(resp.Body)
+	decoder.Decode(&responseData)
+
+	var apiData []ProxyService = []ProxyService{}
+
+	for i := 0; i < len(responseData); i++ {
+		p := ProxyService{
+			Id:             responseData[i].Id,
+			Name:           responseData[i].ServerNodeConfiguration.Name,
+			HostName:       responseData[i].ServerNodeConfiguration.HostName,
+			VirtualProxies: responseData[i].Settings.VirtualProxies,
+		}
+
+		apiData = append(apiData, p)
+	}
+
+	return &apiData, nil
+}
+
 func GetTestUsers() (*[]User, error) {
 	xrfkey := util.GenerateXrfkey()
 
-	baseUrl := "https://" + config.GlobalConfig.Qlik.Host + ":4242/qrs/user"
+	baseUrl := "https://" + config.GlobalConfig.Qlik.RepositoryHost + ":4242/qrs/user"
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
@@ -257,7 +340,7 @@ func GetTestUsers() (*[]User, error) {
 func GetUserDetails(userId string) (*User, error) {
 	xrfkey := util.GenerateXrfkey()
 
-	baseUrl := "https://" + config.GlobalConfig.Qlik.Host + ":4242/qrs/user"
+	baseUrl := "https://" + config.GlobalConfig.Qlik.RepositoryHost + ":4242/qrs/user"
 
 	encoded := url.Values{}
 	encoded.Set("Xrfkey", xrfkey)
@@ -293,4 +376,58 @@ func GetUserDetails(userId string) (*User, error) {
 	}
 
 	return &responseData[0], nil
+}
+
+func getProxyService(id string) (*ProxyServiceRaw, error) {
+	xrfkey := util.GenerateXrfkey()
+	url := fmt.Sprintf(
+		"https://%s:4242/qrs/proxyservice/%s?Xrfkey=%s",
+		config.GlobalConfig.Qlik.RepositoryHost,
+		id,
+		xrfkey,
+	)
+
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		http.NoBody,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := ProxyServiceRaw{}
+		return &t, err
+	}
+
+	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	resp, err := config.QlikClient.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		t := ProxyServiceRaw{}
+		return &t, err
+	}
+
+	if resp.StatusCode == 404 {
+		log.Error().Err(err).Msg("ProxyService not found!" + id)
+		t := ProxyServiceRaw{}
+		return &t, errors.New("ProxyService not found")
+	}
+
+	var responseData ProxyServiceRaw
+
+	decoder := json.NewDecoder(resp.Body)
+	decoder.Decode(&responseData)
+
+	return &responseData, nil
+}
+
+func getPresentationUrl(machineName string) string {
+	prettyName := config.GlobalConfig.Qlik.DomainMapping[machineName]
+
+	if prettyName == "" {
+		return machineName
+	}
+
+	return prettyName
 }
