@@ -1,14 +1,18 @@
 [server]
-port = 8081
-httpsCertificatePath = "c:/path/to/https/pem/certificates"
+port = 8081                                                # where to run the app
+httpsCertificatePath = "c:/path/to/https/pem/certificates" # full path to ssl certificates (cert.pem and cert_key.pem)
 
 [qlik]
-host = "machine-name"
-certificatesPath = "c:/path/to/certificates"
-userId = "sa_api"
-userDirectory = "INTERNAL"
-domainName="sense-apr-2019"
+certificatesPath = "c:/path/to/certificates" # full path to where qlik certificates are located
+repositoryHost = "sense-apr-2019"            # host/machine name where the repo communication to be made
+userId = "sa_api"                            # (optional) on behalf of which user the communication to be made. default is sa_api
+userDirectory = "INTERNAL"                   # (optional) internal user userDirectory. default is INTERNAL
 
-[qlik.ports]
-repository = 4242
-proxy = 4243
+# optional
+# mapping between the existing host/machine names and the pretty url
+# when the ticket is generated apply this mapping for the return QMC and Hub urls
+# if this section do not exists or no mapping is found
+# then the node's machine name will be used
+[qlik.domainMapping]
+"sense-apr-20119" = "sense-apr-2999"
+"sense-apr-2019" = "sense-apr-2099"
