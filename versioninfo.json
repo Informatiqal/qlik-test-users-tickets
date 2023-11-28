@@ -2,13 +2,13 @@
     "FixedFileInfo": {
         "FileVersion": {
             "Major": 0,
-            "Minor": 2,
+            "Minor": 3,
             "Patch": 0,
             "Build": 0
         },
         "ProductVersion": {
             "Major": 0,
-            "Minor": 2,
+            "Minor": 3,
             "Patch": 0,
             "Build": 0
         },
@@ -29,7 +29,7 @@
         "OriginalFilename": "qs_test_users",
         "PrivateBuild": "",
         "ProductName": "Qlik Test Users Ticket Generator",
-        "ProductVersion": "v0.0.2.0",
+        "ProductVersion": "v0.0.3.0",
         "SpecialBuild": ""
     },
     "VarFileInfo": {
