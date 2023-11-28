@@ -3,18 +3,22 @@
 package main
 
 import (
-	"errors"
-	"flag"
+	// "errors"
+	// "flag"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
-	"strings"
+
+	// "os"
+	// "strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API"
-	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
+	// "github.com/informatiqal/qlik-test-users-tickets/API/qlik"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
-	"github.com/informatiqal/qlik-test-users-tickets/Util"
+
+	// "github.com/informatiqal/qlik-test-users-tickets/Util"
+	"github.com/informatiqal/qlik-test-users-tickets/cmd"
 	"github.com/informatiqal/qlik-test-users-tickets/static"
 	"github.com/kardianos/service"
 )
@@ -64,115 +68,119 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
-	log := logger.Zero
+	// log := logger.Zero
 
-	var testUsersDirectoryArg string
-	var testUsersArg string
-	var testUsers []string
-	var certPathArg string
-	var hostArg string
-	var generateCert bool
-	var mode string
+	// var testUsersDirectoryArg string
+	// var testUsersArg string
+	// var testUsers []string
+	// var certPathArg string
+	// var hostArg string
+	// var generateCert bool
+	// var mode string
 
-	svcConfig := &service.Config{
-		Name:        "QlikSenseTestUsers",
-		DisplayName: "Qlik Sense Test Users",
-		Description: "Generate Qlik tickets for test users",
-	}
+	// svcConfig := &service.Config{
+	// 	Name:        "QlikSenseTestUsers",
+	// 	DisplayName: "Qlik Sense Test Users",
+	// 	Description: "Generate Qlik tickets for test users",
+	// }
 
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
-	}
+	// prg := &program{}
+	// s, err := service.New(prg, svcConfig)
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg(err.Error())
+	// }
 
-	flag.StringVar(&mode, "mode", "", "install/uninstall/run")
+	cmd.Execute()
 
-	flag.StringVar(
-		&testUsersDirectoryArg,
-		"userDirectory",
-		"",
-		"Test users user directory suffix. The resulted UD will be TESTING_<suffix>",
-	)
+	log.Println("blah")
 
-	flag.StringVar(
-		&hostArg,
-		"host",
-		"",
-		"Qlik Sense host/machine name. Make sure that the machine is accessible on port 4242",
-	)
+	// flag.StringVar(&mode, "mode", "", "install/uninstall/run")
 
-	flag.StringVar(
-		&certPathArg,
-		"certPath",
-		"",
-		"Directory location where cert.pem and cert_key.pem are located",
-	)
+	// flag.StringVar(
+	// 	&testUsersDirectoryArg,
+	// 	"userDirectory",
+	// 	"",
+	// 	"Test users user directory suffix. The resulted UD will be TESTING_<suffix>",
+	// )
 
-	flag.StringVar(
-		&testUsersArg,
-		"users",
-		"",
-		"Semicolon list of users to be created into to the provided user directory",
-	)
+	// flag.StringVar(
+	// 	&hostArg,
+	// 	"host",
+	// 	"",
+	// 	"Qlik Sense host/machine name. Make sure that the machine is accessible on port 4242",
+	// )
 
-	flag.BoolVar(
-		&generateCert,
-		"generateCert",
-		false,
-		"Generate self-signed certificates in the current folder",
-	)
+	// flag.StringVar(
+	// 	&certPathArg,
+	// 	"certPath",
+	// 	"",
+	// 	"Directory location where cert.pem and cert_key.pem are located",
+	// )
 
-	flag.Parse()
+	// flag.StringVar(
+	// 	&testUsersArg,
+	// 	"users",
+	// 	"",
+	// 	"Semicolon list of users to be created into to the provided user directory",
+	// )
 
-	if mode == "install" {
-		err = s.Install()
-		if err != nil {
-			log.Fatal().Err(err).Msg(err.Error())
-		}
-	}
+	// flag.BoolVar(
+	// 	&generateCert,
+	// 	"generateCert",
+	// 	false,
+	// 	"Generate self-signed certificates in the current folder",
+	// )
 
-	if mode == "uninstall" {
-		err = s.Uninstall()
-		if err != nil {
-			log.Fatal().Err(err).Msg(err.Error())
-		}
-	}
+	// flag.Parse()
 
-	if mode == "" || mode == "run" {
-		err = s.Run()
-		if err != nil {
-			log.Fatal().Err(err).Msg(err.Error())
-		}
-	}
+	// if mode == "install" {
+	// 	err = s.Install()
+	// 	if err != nil {
+	// 		log.Fatal().Err(err).Msg(err.Error())
+	// 	}
+	// }
 
-	if generateCert {
-		util.CreateSelfSignedCertificates()
-		os.Exit(0)
-	}
+	// if mode == "uninstall" {
+	// 	err = s.Uninstall()
+	// 	if err != nil {
+	// 		log.Fatal().Err(err).Msg(err.Error())
+	// 	}
+	// }
 
-	testUsers = strings.Split(testUsersArg, ";")
+	// if mode == "" || mode == "run" {
+	// err := s.Run()
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg(err.Error())
+	// }
+	// }
 
-	if len(testUsers) == 1 && testUsers[0] == "" && testUsersDirectoryArg != "" {
-		err := errors.New("user directory was provided but no users were passed")
-		log.Fatal().Err(err).Msg("User directory was provided but no users were passed")
-	}
+	// if generateCert {
+	// 	util.CreateSelfSignedCertificates()
+	// 	os.Exit(0)
+	// }
 
-	if len(testUsers) > 0 &&
-		testUsers[0] != "" &&
-		testUsersDirectoryArg != "" &&
-		certPathArg != "" &&
-		hostArg != "" {
-		qlik.CreateTestUsers(
-			hostArg,
-			testUsersDirectoryArg,
-			testUsers,
-			certPathArg,
-		)
+	// testUsers = strings.Split(testUsersArg, ";")
 
-		fmt.Println("")
-		fmt.Println("Operation completed!")
-		defer os.Exit(0)
-	}
+	// if len(testUsers) == 1 && testUsers[0] == "" && testUsersDirectoryArg != "" {
+	// 	err := errors.New("user directory was provided but no users were passed")
+	// 	log.Fatal().Err(err).Msg("User directory was provided but no users were passed")
+	// }
+
+	// if len(testUsers) > 0 &&
+	// 	testUsers[0] != "" &&
+	// 	testUsersDirectoryArg != "" &&
+	// 	certPathArg != "" &&
+	// 	hostArg != "" {
+	// 	qlik.CreateTestUsers(
+	// 		hostArg,
+	// 		testUsersDirectoryArg,
+	// 		testUsers,
+	// 		certPathArg,
+	// 	)
+
+	// 	fmt.Println("")
+	// 	fmt.Println("Operation completed!")
+	// 	defer os.Exit(0)
+	// }
 
 }

@@ -9,7 +9,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
-	"fmt"
 	"github.com/pkg/errors"
 	"log"
 	"math/big"
@@ -39,7 +38,7 @@ func CreateSelfSignedCertificates() {
 
 	os.WriteFile(pwd+"/cert.pem", cert, 0644)
 	os.WriteFile(pwd+"./cert_key.pem", key, 0644)
-	fmt.Println(string(thumbprint))
+	log.Print("Thumbprint: " + string(thumbprint))
 }
 
 func generateCertificates() ([]byte, []byte, []byte, error) {
