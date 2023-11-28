@@ -3,18 +3,14 @@
 package main
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/informatiqal/qlik-test-users-tickets/API"
-	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
-	"github.com/informatiqal/qlik-test-users-tickets/Util"
+	"github.com/informatiqal/qlik-test-users-tickets/cmd"
 	"github.com/informatiqal/qlik-test-users-tickets/static"
 	"github.com/kardianos/service"
 )
@@ -64,115 +60,33 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
+	args := os.Args
+
 	log := logger.Zero
 
-	var testUsersDirectoryArg string
-	var testUsersArg string
-	var testUsers []string
-	var certPathArg string
-	var hostArg string
-	var generateCert bool
-	var mode string
+	var version = "0.2.0"
 
-	svcConfig := &service.Config{
-		Name:        "QlikSenseTestUsers",
-		DisplayName: "Qlik Sense Test Users",
-		Description: "Generate Qlik tickets for test users",
-	}
+	cmd.Execute(version)
 
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
-	}
+	// no arguments were provided - run the main logic
+	if len(args) == 1 {
 
-	flag.StringVar(&mode, "mode", "", "install/uninstall/run")
+		svcConfig := &service.Config{
+			Name:        "QlikSenseTestUsers",
+			DisplayName: "Qlik Sense Test Users",
+			Description: "Generate Qlik tickets for test users",
+		}
 
-	flag.StringVar(
-		&testUsersDirectoryArg,
-		"userDirectory",
-		"",
-		"Test users user directory suffix. The resulted UD will be TESTING_<suffix>",
-	)
-
-	flag.StringVar(
-		&hostArg,
-		"host",
-		"",
-		"Qlik Sense host/machine name. Make sure that the machine is accessible on port 4242",
-	)
-
-	flag.StringVar(
-		&certPathArg,
-		"certPath",
-		"",
-		"Directory location where cert.pem and cert_key.pem are located",
-	)
-
-	flag.StringVar(
-		&testUsersArg,
-		"users",
-		"",
-		"Semicolon list of users to be created into to the provided user directory",
-	)
-
-	flag.BoolVar(
-		&generateCert,
-		"generateCert",
-		false,
-		"Generate self-signed certificates in the current folder",
-	)
-
-	flag.Parse()
-
-	if mode == "install" {
-		err = s.Install()
+		prg := &program{}
+		s, err := service.New(prg, svcConfig)
 		if err != nil {
 			log.Fatal().Err(err).Msg(err.Error())
 		}
-	}
 
-	if mode == "uninstall" {
-		err = s.Uninstall()
-		if err != nil {
-			log.Fatal().Err(err).Msg(err.Error())
-		}
-	}
-
-	if mode == "" || mode == "run" {
 		err = s.Run()
 		if err != nil {
 			log.Fatal().Err(err).Msg(err.Error())
 		}
-	}
-
-	if generateCert {
-		util.CreateSelfSignedCertificates()
-		os.Exit(0)
-	}
-
-	testUsers = strings.Split(testUsersArg, ";")
-
-	if len(testUsers) == 1 && testUsers[0] == "" && testUsersDirectoryArg != "" {
-		err := errors.New("user directory was provided but no users were passed")
-		log.Fatal().Err(err).Msg("User directory was provided but no users were passed")
-	}
-
-	if len(testUsers) > 0 &&
-		testUsers[0] != "" &&
-		testUsersDirectoryArg != "" &&
-		certPathArg != "" &&
-		hostArg != "" {
-		qlik.CreateTestUsers(
-			hostArg,
-			testUsersDirectoryArg,
-			testUsers,
-			certPathArg,
-		)
-
-		fmt.Println("")
-		fmt.Println("Operation completed!")
-		defer os.Exit(0)
 	}
 
 }

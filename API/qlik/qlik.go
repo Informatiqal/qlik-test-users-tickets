@@ -94,7 +94,74 @@ func CreateTestUsers(
 
 		req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+		req.Header.Add("X-Qlik-User", fmt.Sprintf(
+			"UserDirectory=%s;UserId=%s",
+			config.GlobalConfig.Qlik.UserDirectory,
+			config.GlobalConfig.Qlik.UserId,
+		))
+		resp, err := config.QlikClient.Do(req)
+
+		if err != nil {
+			sysLog.Fatal(err.Error())
+		}
+
+		type userDetails struct {
+			Id string `json:"id"`
+		}
+
+		var responseData userDetails
+
+		decoder := json.NewDecoder(resp.Body)
+		decoder.Decode(&responseData)
+
+		fmt.Printf("User \"%s\" created -> %s\n", strings.TrimSpace(user), responseData.Id)
+	}
+
+	return true
+}
+
+// TODO: this should return something meaningful and not boolean
+func CreateTestUsersCmd(
+	users []string,
+	userDirectorySuffix string,
+) bool {
+	for _, user := range users {
+		xrfkey := util.GenerateXrfkey()
+		url := fmt.Sprintf(
+			"https://%s:4242/qrs/user?Xrfkey=%s",
+			config.GlobalConfig.Qlik.RepositoryHost,
+			xrfkey,
+		)
+
+		jsonBody := []byte(
+			fmt.Sprintf(
+				`{"userId": "%s","userDirectory": "%s","removedExternally": false,"blacklisted": false,"name": "%s"}`,
+				strings.TrimSpace(user),
+				"TESTING_"+userDirectorySuffix,
+				strings.TrimSpace(user),
+			),
+		)
+		bodyReader := bytes.NewReader(jsonBody)
+
+		req, err := http.NewRequest(
+			"POST",
+			url,
+			bodyReader,
+		)
+		if err != nil {
+			sysLog.Fatal(err.Error())
+		}
+
+		req.Header.Add("X-Qlik-Xrfkey", xrfkey)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add(
+			"X-Qlik-User",
+			fmt.Sprintf(
+				"UserDirectory=%s;UserId=%s",
+				config.GlobalConfig.Qlik.UserDirectory,
+				config.GlobalConfig.Qlik.UserId,
+			),
+		)
 		resp, err := config.QlikClient.Do(req)
 
 		if err != nil {
@@ -170,7 +237,11 @@ func CreateTicketForUser(
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
@@ -230,7 +301,11 @@ func GetVirtualProxies() (*[]VirtualProxy, error) {
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
@@ -270,7 +345,11 @@ func GetProxyServices() (*[]ProxyService, error) {
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
@@ -321,7 +400,11 @@ func GetTestUsers() (*[]User, error) {
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
@@ -359,7 +442,11 @@ func GetUserDetails(userId string) (*User, error) {
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
@@ -400,7 +487,11 @@ func getProxyService(id string) (*ProxyServiceRaw, error) {
 
 	req.Header.Add("X-Qlik-Xrfkey", xrfkey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Qlik-User", "UserDirectory=INTERNAL;UserId=sa_api")
+	req.Header.Add("X-Qlik-User", fmt.Sprintf(
+		"UserDirectory=%s;UserId=%s",
+		config.GlobalConfig.Qlik.UserDirectory,
+		config.GlobalConfig.Qlik.UserId,
+	))
 	resp, err := config.QlikClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("")
