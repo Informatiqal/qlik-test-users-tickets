@@ -30,4 +30,5 @@ func init() {
 	rootCmd.AddCommand(certificatesCmd)
 	rootCmd.AddCommand(usersCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(ticketCmd)
 }
