@@ -25,9 +25,6 @@ var serviceCmd = &cobra.Command{
 	Use:   "service",
 	Short: "Install/Uninstall the windows service",
 	Long:  "Install/Uninstall the windows service",
-	Annotations: map[string]string{
-		"command_category": "sub",
-	},
 }
 
 var installServiceCmd = (&cobra.Command{
@@ -35,7 +32,7 @@ var installServiceCmd = (&cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Short:   "Install Qlik Test Users Tickets as a Windows service",
 	Long:    "Install Qlik Test Users Tickets as a Windows service",
-	Example: ".\\qlik-test-user-tickets service install",
+	Example: ".\\qs_test_users service install",
 
 	Run: func(_ *cobra.Command, args []string) {
 
@@ -60,7 +57,7 @@ var uninstallServiceCmd = (&cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Short:   "Uninstall Qlik Test Users Tickets Windows service",
 	Long:    "Uninstall Qlik Test Users Tickets Windows service",
-	Example: ".\\qlik-test-user-tickets service uninstall",
+	Example: ".\\qs_test_users service uninstall",
 
 	Run: func(_ *cobra.Command, args []string) {
 

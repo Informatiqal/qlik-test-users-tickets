@@ -12,17 +12,14 @@ import (
 
 var usersCmd = &cobra.Command{
 	Use:   "users",
-	Short: "Install/Uninstall the windows service",
-	Long:  "Install/Uninstall the windows service",
-	Annotations: map[string]string{
-		"command_category": "sub",
-	},
+	Short: "Create test users inside Qlik Sense",
+	Long:  "Create test users inside Qlik Sense",
 }
 
 var usersCreateCmd = (&cobra.Command{
 	Use:     "create",
 	Short:   "Create test users in Qlik",
-	Example: ".\\qlik-test-user-tickets users create",
+	Example: ".\\qs_test_users users create --suffix something --users \"user1;user2;user3\" ",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		userDirectorySuffix, err := cmd.Flags().GetString("suffix")

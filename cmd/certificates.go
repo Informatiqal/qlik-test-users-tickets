@@ -12,7 +12,7 @@ var certificatesCmd = &cobra.Command{
 	Use:     "gencert",
 	Short:   "Generate set of self-signed pem certificates in the current folder",
 	Long:    "Generate set of self-signed pem certificates in the current folder",
-	Example: ".\\qlik-test-user-tickets gencert",
+	Example: ".\\qs_test_users gencert",
 	Run: func(_ *cobra.Command, args []string) {
 		util.CreateSelfSignedCertificates()
 

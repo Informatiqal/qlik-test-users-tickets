@@ -27,20 +27,18 @@ First we'll need the [latest release](https://github.com/informatiqal/qlik-test-
 
 The app listen on `https` and we need certificates for that. If you dont have any at the moment the app itself can generate self-signed ones:
 
-`.\qlik-test-users-tickets.exe --generateCert`
+`.\qs_test_users.exe gencert`
 
 The command above will create `cert.pem` and `cert_key.pem` in the current folder
 
 ### Users
 
-The app can generate set of test users, using the Repository API, in Qlik Sense. You can create as many as you want.
+The app can generate set of test users, using the Repository API, in Qlik Sense. Using the data from `config.toml` its possible to create and many as needed at any time.
 
-`.\qlik-test-users-tickets.exe --host <sense-host> --users "user1;user2;user3" --certPath c:\path\to\qlik\sense\certificates`
+`.\qs_test_users.exe users create --suffix SOMETHING --users "user1;user2;user3..."`
 
-- `--host` - Qlik Sense host name. The command using Qlik Repository API so port `4242` should be accessible
-- `--users` - semi-colon list of user ids. User ids can be anything as long as they do not repeat in the same user directory
-- `--userDirectory` - we have to provide user directory to create the users under it. The app requires **suffix** and will create the users under `TESTING_<provided suffix>` user directory
-- `--certPath` - path to a folder where Qlik Sense certificates can be located
+- `--users` - semi-colon list of user ids. User ids can be anything as long as they do not repeat in the same user directory. Ideally wrap the users string into double-quotes
+- `--suffix` - we have to provide user directory to create the users under it. The app requires **suffix** and will create the users under `TESTING_<provided suffix>` user directory
 
 ### Config
 
@@ -50,19 +48,23 @@ The release archive will contain an example config - `config_example.toml`
 
 ```toml
 [server]
-port = 8081 # on which port the app will server the UI
+port = 8081 # where to run the app. If not provided 8081 will be used
 httpsCertificatePath = "c:/path/to/https/pem/certificates" # full path to the SSL certificates
 
 [qlik]
-host = "machine-name" # Qlik Sense host name
 certificatesPath = "c:/path/to/certificates" # full path to Qlik Sense certificates
-userId = "sa_api" # user id, under which the app will communicate with Qlik
-userDirectory = "INTERNAL"
-domainName = "my-qlik.com" # used to generate the QMC and Hub links once the ticket is generated
+repositoryHost = "machine-name" # host/machine name where the repo communication to be made
+userId = "sa_api" # (optional) on behalf of which user the communication to be made. default is sa_api
+userDirectory = "INTERNAL" # (optional) internal user userDirectory. default is INTERNAL
 
-[qlik.ports]
-repository = 4242 # repository api port. default is 4242
-proxy = 4243 # proxy api port. default is 4243
+# optional
+# mapping between the existing host/machine names and the pretty url
+# when the ticket is generated apply this mapping for the return QMC and Hub urls
+# if this section do not exists or no mapping is found
+# then the node's machine name will be used
+[qlik.domainMapping]
+"machine-name1" = "my-qlik.com"
+"another-machine-name" = "my-other-domain.com"
 
 ```
 
@@ -70,16 +72,20 @@ proxy = 4243 # proxy api port. default is 4243
 
 At this point we are ready to install the service:
 
-`.\qlik-test-users-tickets.exe --install`
+`.\qs_test_users.exe service install`
 
 The command will install the app as a Windows service. Once the service is installed it has to be started.
 
+P.S. To uninstall the service simple run:
+
+`.\qs_test_users.exe service uninstall`
+
 ## Logging
 
-The service produces two log files in the folder where the `qlik-test-users-tickets.exe` is located:
+The service produces two log files in the folder where the `qs_test_users.exe` is located:
 
-- app.log - general app log - server start, stop events. Any errors that have occurred. General audit - which tickets were generated
-- http.log - the raw level http logs. Which endpoints were called, when, from which IP etc.
+- `app.log`- general app log - server start, stop events. Any errors that have occurred. General audit - which tickets were generated
+- `http.log` - the raw level http logs. Which endpoints were called, when, from which IP etc.
 
 ## Exposed endpoints
 

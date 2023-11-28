@@ -3,7 +3,7 @@ go generate
 Write-Host """go generate"" completed"
 
 # build the package
-go build
+go build -o qs_test_users.exe
 Write-Host """go build"" completed"
 
 # temp folder, used to create release zip file
@@ -23,7 +23,7 @@ if (Test-Path -LiteralPath "./release.zip") {
 New-Item -ItemType Directory -Path $path
 
 # copy the final exe to the temp release folder
-Copy-Item -Path "./qlik-test-users-tickets.exe" -Destination "$path/qlik-test-users-tickets.exe" -Verbose
+Copy-Item -Path "./qs_test_users.exe" -Destination "$path/qs_test_users.exe" -Verbose
 
 # copy the README to the temp release folder
 Copy-Item -Path "./README.md" -Destination "$path" -Verbose
@@ -38,4 +38,4 @@ Copy-Item -Path "./config_example.toml" -Destination "$path" -Verbose
 Compress-Archive -Path "$path/*" -DestinationPath "./release.zip" -Force -Verbose
 
 # remove the temp release folder
-# Remove-Item -LiteralPath $path -Recurse -Verbose
+Remove-Item -LiteralPath $path -Recurse -Verbose

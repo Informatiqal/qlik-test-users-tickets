@@ -1,10 +1,10 @@
 [server]
-port = 8081                                                # where to run the app
+port = 8081                                                # where to run the app. If not provided 8081 will be used
 httpsCertificatePath = "c:/path/to/https/pem/certificates" # full path to ssl certificates (cert.pem and cert_key.pem)
 
 [qlik]
 certificatesPath = "c:/path/to/certificates" # full path to where qlik certificates are located
-repositoryHost = "sense-apr-2019"            # host/machine name where the repo communication to be made
+repositoryHost = "central-node-machine-name" # host/machine name where the repo communication to be made
 userId = "sa_api"                            # (optional) on behalf of which user the communication to be made. default is sa_api
 userDirectory = "INTERNAL"                   # (optional) internal user userDirectory. default is INTERNAL
 
@@ -14,5 +14,5 @@ userDirectory = "INTERNAL"                   # (optional) internal user userDire
 # if this section do not exists or no mapping is found
 # then the node's machine name will be used
 [qlik.domainMapping]
-"sense-apr-20119" = "sense-apr-2999"
-"sense-apr-2019" = "sense-apr-2099"
+"machine-name1" = "my-qlik.com"
+"another-machine-name" = "my-other-domain.com"
