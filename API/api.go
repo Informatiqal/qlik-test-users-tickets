@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
+	"github.com/informatiqal/qlik-test-users-tickets/qlik"
 	"github.com/rs/zerolog/log"
 )
 

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/informatiqal/qlik-test-users-tickets/API"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
+	"github.com/informatiqal/qlik-test-users-tickets/api"
 	"github.com/informatiqal/qlik-test-users-tickets/cmd"
 	"github.com/informatiqal/qlik-test-users-tickets/static"
 	"github.com/kardianos/service"
@@ -60,17 +60,20 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
-	args := os.Args
-
 	log := logger.Zero
 
 	var version = "0.3.0"
 
+	// execute and terminal command first
 	cmd.Execute(version)
 
 	// no arguments were provided - run the main logic
-	if len(args) == 1 {
+	// this is here mostly because of the --help command
+	// have to check if it can be overwritten so the app to be
+	// in control of the exit
+	if len(os.Args) == 1 {
 
+		// this is mentioned multiple times. Have to be moved somewhere
 		svcConfig := &service.Config{
 			Name:        "QlikSenseTestUsers",
 			DisplayName: "Qlik Sense Test Users",

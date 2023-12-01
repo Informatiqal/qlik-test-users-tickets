@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
+	"github.com/informatiqal/qlik-test-users-tickets/qlik"
 	"github.com/spf13/cobra"
 )
 
