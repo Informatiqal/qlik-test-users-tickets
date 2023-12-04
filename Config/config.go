@@ -10,23 +10,26 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+type qlikCluster struct {
+	CertificatesPath string
+	UserId           string
+	UserDirectory    string
+	RepositoryHost   string
+	DomainMapping    map[string]string
+}
+
 type config struct {
 	Server struct {
 		Port                 int
 		HttpsCertificatePath string
 	}
-	Qlik struct {
-		Host             string
-		CertificatesPath string
-		UserId           string
-		UserDirectory    string
-		RepositoryHost   string
-		DomainMapping    map[string]string
-	}
+	Qlik map[string]qlikCluster
 }
 
 var GlobalConfig config
-var QlikClient *http.Client
+
+// var QlikClient *http.Client
+var QlikClients map[string]*http.Client
 
 func NewConfig() {
 	log := logger.Zero
@@ -53,32 +56,56 @@ func NewConfig() {
 	}
 
 	// if userId is not provided use the default INTERNAL\sa_api
-	if GlobalConfig.Qlik.UserId == "" {
-		GlobalConfig.Qlik.UserId = "sa_api"
-		GlobalConfig.Qlik.UserDirectory = "INTERNAL"
-	}
+	// if GlobalConfig.Qlik.UserId == "" {
+	// 	GlobalConfig.Qlik.UserId = "sa_api"
+	// 	GlobalConfig.Qlik.UserDirectory = "INTERNAL"
+	// }
 
-	setQlikHttpClient()
+	setQlikHttpClients()
 }
 
-func setQlikHttpClient() {
-	log := logger.Zero
+// func setQlikHttpClient() {
+// 	log := logger.Zero
 
-	qlikCert, err := tls.LoadX509KeyPair(
-		GlobalConfig.Qlik.CertificatesPath+"/client.pem",
-		GlobalConfig.Qlik.CertificatesPath+"/client_key.pem",
-	)
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
+// 	qlikCert, err := tls.LoadX509KeyPair(
+// 		GlobalConfig.Qlik.CertificatesPath+"/client.pem",
+// 		GlobalConfig.Qlik.CertificatesPath+"/client_key.pem",
+// 	)
+// 	if err != nil {
+// 		log.Fatal().Err(err).Msg(err.Error())
+// 	}
+
+// 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
+// 	customTransport.TLSClientConfig = &tls.Config{
+// 		InsecureSkipVerify: false,
+// 		Certificates:       []tls.Certificate{qlikCert},
+// 	}
+
+// 	client := &http.Client{Transport: customTransport}
+
+// 	QlikClient = client
+// }
+
+func setQlikHttpClients() {
+	for q := range GlobalConfig.Qlik {
+		log := logger.Zero
+
+		qlikCert, err := tls.LoadX509KeyPair(
+			GlobalConfig.Qlik[q].CertificatesPath+"/client.pem",
+			GlobalConfig.Qlik[q].CertificatesPath+"/client_key.pem",
+		)
+		if err != nil {
+			log.Fatal().Err(err).Msg(err.Error())
+		}
+
+		customTransport := http.DefaultTransport.(*http.Transport).Clone()
+		customTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: false,
+			Certificates:       []tls.Certificate{qlikCert},
+		}
+
+		client := &http.Client{Transport: customTransport}
+
+		QlikClients[q] = client
 	}
-
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: false,
-		Certificates:       []tls.Certificate{qlikCert},
-	}
-
-	client := &http.Client{Transport: customTransport}
-
-	QlikClient = client
 }
