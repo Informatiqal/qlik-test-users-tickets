@@ -28,7 +28,6 @@ type config struct {
 
 var GlobalConfig config
 
-// var QlikClient *http.Client
 var QlikClients map[string]*http.Client
 
 func NewConfig() {
@@ -55,36 +54,8 @@ func NewConfig() {
 		log.Fatal().Err(readError).Msg("Certificate path should be provided")
 	}
 
-	// if userId is not provided use the default INTERNAL\sa_api
-	// if GlobalConfig.Qlik.UserId == "" {
-	// 	GlobalConfig.Qlik.UserId = "sa_api"
-	// 	GlobalConfig.Qlik.UserDirectory = "INTERNAL"
-	// }
-
 	setQlikHttpClients()
 }
-
-// func setQlikHttpClient() {
-// 	log := logger.Zero
-
-// 	qlikCert, err := tls.LoadX509KeyPair(
-// 		GlobalConfig.Qlik.CertificatesPath+"/client.pem",
-// 		GlobalConfig.Qlik.CertificatesPath+"/client_key.pem",
-// 	)
-// 	if err != nil {
-// 		log.Fatal().Err(err).Msg(err.Error())
-// 	}
-
-// 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-// 	customTransport.TLSClientConfig = &tls.Config{
-// 		InsecureSkipVerify: false,
-// 		Certificates:       []tls.Certificate{qlikCert},
-// 	}
-
-// 	client := &http.Client{Transport: customTransport}
-
-// 	QlikClient = client
-// }
 
 func setQlikHttpClients() {
 	for q := range GlobalConfig.Qlik {
