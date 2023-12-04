@@ -28,7 +28,13 @@ type config struct {
 
 var GlobalConfig config
 
-var QlikClients map[string]*http.Client
+type clientDetails struct {
+	UserId        string
+	UserDirectory string
+	HTTP          *http.Client
+}
+
+var QlikClients map[string]clientDetails
 
 func NewConfig() {
 	log := logger.Zero
@@ -58,6 +64,7 @@ func NewConfig() {
 }
 
 func setQlikHttpClients() {
+
 	for q := range GlobalConfig.Qlik {
 		log := logger.Zero
 
@@ -77,6 +84,18 @@ func setQlikHttpClients() {
 
 		client := &http.Client{Transport: customTransport}
 
-		QlikClients[q] = client
+		details := clientDetails{
+			UserId:        "",
+			UserDirectory: "",
+			HTTP:          client,
+		}
+
+		// if userId is not provided use the default INTERNAL\sa_api
+		if GlobalConfig.Qlik[q].UserId == "" {
+			details.UserId = "sa_api"
+			details.UserDirectory = "INTERNAL"
+		}
+
+		QlikClients[q] = details
 	}
 }
