@@ -24,6 +24,14 @@
       to "refresh again?" in order to see the security rule implication
     </li>
   </ul>
+
+  <div>
+    Please refer to the complete <a
+      target="_blank"
+      href="https://github.com/Informatiqal/qlik-test-users-tickets#readme"
+      >documentation</a
+    > for more information
+  </div>
 </div>
 
 <style>
@@ -33,5 +41,18 @@
 
   p {
     font-size: 17px;
+  }
+
+  a[target="_blank"]::after {
+    content: "";
+    width: 1em;
+    height: 1em;
+    margin: 0 0.05em 0 0.1em;
+    background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjNjQ2Y2ZmIj48cGF0aCBkPSJNOSAyTDkgMyAxMi4zIDMgNiA5LjMgNi43IDEwIDEzIDMuNyAxMyA3IDE0IDcgMTQgMlpNNCA0QzIuOSA0IDIgNC45IDIgNkwyIDEyQzIgMTMuMSAyLjkgMTQgNCAxNEwxMCAxNEMxMS4xIDE0IDEyIDEzLjEgMTIgMTJMMTIgNyAxMSA4IDExIDEyQzExIDEyLjYgMTAuNiAxMyAxMCAxM0w0IDEzQzMuNCAxMyAzIDEyLjYgMyAxMkwzIDZDMyA1LjQgMy40IDUgNCA1TDggNSA5IDRaIi8+PC9zdmc+)
+      no-repeat;
+    background-size: contain;
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 2px;
   }
 </style>

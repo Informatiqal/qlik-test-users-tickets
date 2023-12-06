@@ -10,7 +10,7 @@ import (
 
 //go:generate npm i
 //go:generate npm run build
-//go:embed dist/*
+//go:embed dist
 var BuildFs embed.FS
 
 func BuildHTTPFS() http.FileSystem {

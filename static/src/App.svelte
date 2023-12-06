@@ -1,6 +1,8 @@
 <script>
   import { onMount } from "svelte";
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
+  import Select from "svelte-select";
+
   import {
     selectedProxy,
     selectedUser,
@@ -21,6 +23,8 @@
   let users = [];
   let virtualProxies = [];
   let proxies = [];
+  let clusters = [];
+  let selectedCluster = "";
   let loaded = false;
   let qmcLink = "";
   let hubLink = "";
@@ -28,7 +32,7 @@
   let generateButtonTitle = "";
   let attributesString = "";
   let attributesPlaceholderValues = [
-    "Additional attributes to be associated with the ticket.\n\n",
+    "Additional attributes (valid JSON) to be associated with the ticket.\n\n",
     `[\n  { "group": "some group" },\n`,
     `  { "group": "another group" },\n`,
     `  { "otherProperty": "some value" },\n`,
@@ -61,23 +65,18 @@
     generateButtonTitle = "Generate";
   }
 
-  async function getUsers() {
-    await fetch("https://localhost:8081/api/users", {
+  async function getUsers(cluster) {
+    await fetch(`https://localhost:8081/api/users/${cluster}`, {
       method: "GET",
     })
       .then((r) => r.json())
       .then((r) => {
         users = r;
-      })
-      .catch((e) => {
-        toast.push(e.message, {
-          theme: { ...toastErrorTheme },
-        });
       });
   }
 
-  async function getProxies() {
-    await fetch("https://localhost:8081/api/proxies", {
+  async function getProxies(cluster) {
+    await fetch(`https://localhost:8081/api/proxies/${cluster}`, {
       method: "GET",
     })
       .then((r) => r.json())
@@ -86,11 +85,25 @@
 
         // pre-select the proxy if there is only one available
         if (proxies.length == 1) selectedProxy.select(proxies[0].id);
-      })
-      .catch((e) => {
-        toast.push(e.message, {
-          theme: { ...toastErrorTheme },
-        });
+      });
+  }
+
+  async function getClusters() {
+    await fetch("https://localhost:8081/api/clusters", {
+      method: "GET",
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        clusters = r;
+        // clusters = [r[0]];
+
+        // if there is only one cluster returned then directly
+        // get the proxies associated with it and dont wait
+        // for the user to select the only available option
+        if (clusters.length == 1)
+          return getProxies(clusters[0]).then(() => {
+            selectedCluster = clusters[0];
+          });
       });
   }
 
@@ -118,6 +131,7 @@
           virtualProxyPrefix: $selectedVP,
           proxyId: $selectedProxy,
           attributes,
+          cluster: selectedCluster["value"],
         }),
       })
         .then((a) => a.json())
@@ -130,7 +144,7 @@
             theme: { ...toastErrorTheme },
           });
         }),
-      new Promise((resolve) => setTimeout(resolve, 1000)),
+      new Promise((resolve) => setTimeout(resolve, 500)),
     ]).then(() => {
       loaded = true;
     });
@@ -145,11 +159,35 @@
     }
   }
 
+  async function selectCluster() {
+    loaded = false;
+    selectedProxy.reset();
+    selectedVP.reset();
+    selectedUser.reset();
+
+    Promise.all([
+      getProxies(selectedCluster["value"]),
+      getUsers(selectedCluster["value"]),
+      new Promise((resolve) => setTimeout(resolve, 500)),
+    ])
+      .then(() => (loaded = true))
+      .catch((e) => {
+        toast.push(e.message, {
+          theme: { ...toastErrorTheme },
+        });
+        selectedCluster = "";
+        loaded = true;
+      });
+  }
+
   onMount(async () => {
+    selectedProxy.reset();
+    selectedVP.reset();
+    selectedUser.reset();
+
     await Promise.all([
-      getUsers(),
-      getProxies(),
-      new Promise((resolve) => setTimeout(resolve, 1000)),
+      getClusters(),
+      new Promise((resolve) => setTimeout(resolve, 500)),
     ]).then(() => (loaded = true));
   });
 </script>
@@ -179,56 +217,137 @@
       <LoaderSVG />
     </div>
   {:else}
+    {#if !selectedCluster["value"]}
+      <div class="overlay"></div>
+      <div class="overlay-text">
+        <div>Please select cluster</div>
+      </div>
+    {/if}
     <content>
-      <users><Users {users} /></users>
-      <proxies><Proxies {proxies} /></proxies>
-      <virtual-proxies><VirtualProxies {virtualProxies} /></virtual-proxies>
-      <attributes>
-        <span class="title">Attributes</span>
-        <textarea
-          bind:value={attributesString}
-          placeholder={attributesPlaceholder}
-        />
-      </attributes>
-      <generate>
-        <button
-          class:button-disabled={!generateButtonEnabled}
-          on:click={() => generateTicket()}
-          title={generateButtonTitle}
-          disabled={!generateButtonEnabled}>GENERATE TICKET</button
+      <clusters>
+        <Select
+          id="clusters"
+          items={clusters}
+          bind:value={selectedCluster}
+          showChevron
+          clearable={false}
+          searchable={false}
+          placeholder="QLIK CLUSTERS"
+          --item-padding="0px"
+          --z-index="101"
+          on:change={selectCluster}
         >
-      </generate>
-      <links>
-        {#if hubLink && qmcLink}
-          <div class="links-content">
-            <span>HUB</span>
-            <span>QMC</span>
+          <div slot="item" let:item class="list-item">
+            &nbsp;&nbsp; {item.label}
           </div>
-          <div class="links-content left">
-            <div>
-              <span>{hubLink} </span>
-              <span
-                class="copy"
-                title="Copy to clipboard"
-                on:click={() => copyToClipBoard(hubLink)}><CopySVG /></span
-              >
+        </Select>
+      </clusters>
+      <selections>
+        <users><Users {users} /></users>
+        <proxies><Proxies {proxies} /></proxies>
+        <virtual-proxies><VirtualProxies {virtualProxies} /></virtual-proxies>
+        <attributes>
+          <span class="title">Attributes</span>
+          <textarea
+            id="attributes"
+            bind:value={attributesString}
+            placeholder={attributesPlaceholder}
+          />
+        </attributes>
+        <generate>
+          <button
+            class:button-disabled={!generateButtonEnabled}
+            on:click={() => generateTicket()}
+            title={generateButtonTitle}
+            disabled={!generateButtonEnabled}>GENERATE TICKET</button
+          >
+        </generate>
+        <links>
+          {#if hubLink && qmcLink}
+            <div class="links-content">
+              <span>HUB</span>
+              <span>QMC</span>
             </div>
-            <div>
-              <span>{qmcLink} </span>
-              <span
-                class="copy"
-                title="Copy to clipboard"
-                on:click={() => copyToClipBoard(qmcLink)}><CopySVG /></span
-              >
+            <div class="links-content left">
+              <div>
+                <span>{hubLink} </span>
+                <span
+                  class="copy"
+                  title="Copy to clipboard"
+                  on:click={() => copyToClipBoard(hubLink)}><CopySVG /></span
+                >
+              </div>
+              <div>
+                <span>{qmcLink} </span>
+                <span
+                  class="copy"
+                  title="Copy to clipboard"
+                  on:click={() => copyToClipBoard(qmcLink)}><CopySVG /></span
+                >
+              </div>
             </div>
-          </div>
-        {/if}
-      </links>
+          {/if}
+        </links>
+      </selections>
     </content>
   {/if}
 </main>
 
 <style>
+  .overlay {
+    margin-top: 50px;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: blueviolet;
+    opacity: 65%;
+    z-index: 100;
+    right: 0px;
+    -webkit-mask-image: linear-gradient(
+      0deg,
+      transparent,
+      150px,
+      blueviolet 300px
+    );
+    mask-image: linear-gradient(0deg, transparent, 150px, blueviolet 300px);
+  }
+  .overlay-text {
+    position: absolute;
+    width: 100%;
+    height: 65%;
+    z-index: 101;
+    right: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 3em;
+    text-transform: uppercase;
+    color: white;
+    letter-spacing: 5px;
+    font-weight: 500;
+  }
+
+  clusters {
+    z-index: 103;
+  }
+
+  .list-item {
+    /* background-color: #242424; */
+    background-color: darkgray;
+    color: black;
+    text-align: left;
+    cursor: pointer;
+    z-index: 99;
+    transition: background-color 0.1s ease-in-out;
+  }
+
+  .list-item:hover {
+    background-color: blueviolet;
+    color: white;
+    transition: background-color 0.2s ease-in-out;
+  }
+
   main {
     display: flex;
     flex-direction: column;
@@ -246,7 +365,6 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     height: 50px;
-    /* color: #ff6e64; */
   }
 
   .logo {
@@ -268,13 +386,26 @@
   }
 
   content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    grid-template-rows: 50px auto;
+    grid-template-columns: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 2rem;
+  }
+
+  selections {
+    /* grid-column: 1; */
     display: grid;
     grid-template-columns: 25% 25% 25% 25%;
-    grid-template-rows: auto auto auto;
-    padding-left: 4rem;
+    grid-template-rows: 350px 50px 50px;
+    padding-left: 1rem;
     padding-right: 4rem;
     padding-top: 2rem;
     gap: 1rem;
+    flex: 1;
   }
 
   .loader {
@@ -282,6 +413,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  clusters {
+    grid-column: 1 / span 2;
+    grid-row: 1;
   }
 
   users {
@@ -323,7 +459,7 @@
   }
 
   attributes > textarea {
-    height: 100%;
+    height: 300px;
     resize: none;
   }
 
@@ -375,6 +511,8 @@
     flex: 1;
     display: flex;
     gap: 1rem;
+    align-items: center;
+    justify-content: center;
   }
 
   .left {
@@ -388,7 +526,8 @@
   textarea {
     border: 1px solid gray;
     border-top-right-radius: 8px;
-    padding: 5px;
+    padding-left: 5px;
+    padding-top: 5px;
   }
 
   textarea:focus {

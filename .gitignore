@@ -27,3 +27,4 @@ config.toml
 resource.syso
 *.zip
 temp-build/
+playground/*

@@ -38,10 +38,12 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    transition: border 0.2s ease-in-out;
   }
 
   .proxy:hover {
     border: 1px solid #646cff;
+    transition: border 0.2s ease-in-out;
   }
 
   .proxy > span {
@@ -65,10 +67,10 @@
   }
 
   .list {
-    max-height: 300px;
-    min-height: 300px;
+    height: 307px;
     background-color: #3f3f46;
     overflow: auto;
+    border: 1px solid transparent;
   }
 
   .host-name {

@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/informatiqal/qlik-test-users-tickets/API/qlik"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
+	"github.com/informatiqal/qlik-test-users-tickets/qlik"
 	"github.com/spf13/cobra"
 )
 
@@ -20,8 +20,10 @@ var ticketCmd = &cobra.Command{
 var ticketCreateCmd = (&cobra.Command{
 	Use:     "create",
 	Short:   "Create web ticket for specific user",
-	Example: ".\\qs_test_users ticket create --suffix something --userId myUserId --vp smt --proxyId 6666666-7777-8888-9999-000000000000 --attributes [{\"group\": \"something\"},...]",
+	Example: ".\\qs_test_users ticket create --suffix something --userId myUserId --vp smt --proxyId 6666666-7777-8888-9999-000000000000 --attributes [{\"group\": \"something\"},...] --cluster \"some cluster name\"",
 	Run: func(cmd *cobra.Command, args []string) {
+		config.NewConfig()
+
 		userDirectorySuffix, err := cmd.Flags().GetString("suffix")
 		if err != nil {
 			log.Fatal(err.Error())
@@ -61,12 +63,18 @@ var ticketCreateCmd = (&cobra.Command{
 			log.Fatal(err.Error())
 		}
 
+		cluster, err := cmd.Flags().GetString("cluster")
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
 		ticket, err := qlik.CreateTicketForUser(
 			userId,
 			"TESTING_"+userDirectorySuffix,
 			virtualProxyPrefix,
 			attributes,
 			proxyId,
+			cluster,
 		)
 		if err != nil {
 			log.Fatal(err.Error())
@@ -100,7 +108,6 @@ var ticketCreateCmd = (&cobra.Command{
 })
 
 func init() {
-	config.NewConfig()
 	ticketCreateCmd.PersistentFlags().
 		String("suffix", "", "Whats the user directory suffix for the requested user?")
 	ticketCreateCmd.MarkPersistentFlagRequired("suffix")
@@ -108,6 +115,9 @@ func init() {
 	ticketCreateCmd.PersistentFlags().
 		String("userId", "", "Whats the userId?")
 	ticketCreateCmd.MarkPersistentFlagRequired("userId")
+
+	ticketCreateCmd.PersistentFlags().
+		String("cluster", "", "Name of the cluster where the ticket to be created. Defined in the config.toml")
 
 	ticketCreateCmd.PersistentFlags().
 		String("proxyId", "", "(optional) On which proxy service the ticket should be created.")

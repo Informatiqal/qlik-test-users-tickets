@@ -13,6 +13,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.selected-item {
+  color: white !important;
+}
+
+.svelte-select {
+  background-color: #3f3f46 !important;
+}
+
+.svelte-select-list {
+  z-index: 102 !important;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

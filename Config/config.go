@@ -10,23 +10,32 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+type qlikCluster struct {
+	CertificatesPath string
+	UserId           string
+	UserDirectory    string
+	RepositoryHost   string
+	TrustAllCerts    bool
+	DomainMapping    map[string]string
+}
+
 type config struct {
 	Server struct {
 		Port                 int
 		HttpsCertificatePath string
 	}
-	Qlik struct {
-		Host             string
-		CertificatesPath string
-		UserId           string
-		UserDirectory    string
-		RepositoryHost   string
-		DomainMapping    map[string]string
-	}
+	Qlik map[string]qlikCluster
 }
 
 var GlobalConfig config
-var QlikClient *http.Client
+
+type clientDetails struct {
+	UserId        string
+	UserDirectory string
+	HTTP          *http.Client
+}
+
+var QlikClients = make(map[string]clientDetails)
 
 func NewConfig() {
 	log := logger.Zero
@@ -52,33 +61,49 @@ func NewConfig() {
 		log.Fatal().Err(readError).Msg("Certificate path should be provided")
 	}
 
-	// if userId is not provided use the default INTERNAL\sa_api
-	if GlobalConfig.Qlik.UserId == "" {
-		GlobalConfig.Qlik.UserId = "sa_api"
-		GlobalConfig.Qlik.UserDirectory = "INTERNAL"
-	}
-
-	setQlikHttpClient()
+	setQlikHttpClients()
 }
 
-func setQlikHttpClient() {
+func setQlikHttpClients() {
 	log := logger.Zero
 
-	qlikCert, err := tls.LoadX509KeyPair(
-		GlobalConfig.Qlik.CertificatesPath+"/client.pem",
-		GlobalConfig.Qlik.CertificatesPath+"/client_key.pem",
-	)
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
+	for q := range GlobalConfig.Qlik {
+		qlikCert, err := tls.LoadX509KeyPair(
+			GlobalConfig.Qlik[q].CertificatesPath+"/client.pem",
+			GlobalConfig.Qlik[q].CertificatesPath+"/client_key.pem",
+		)
+		if err != nil {
+			log.Fatal().Err(err).Msg(err.Error())
+		}
+
+		trustAllCerts := true
+		if GlobalConfig.Qlik[q].TrustAllCerts {
+			trustAllCerts = !GlobalConfig.Qlik[q].TrustAllCerts
+		}
+
+		customTransport := http.DefaultTransport.(*http.Transport).Clone()
+		customTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: trustAllCerts,
+			Certificates:       []tls.Certificate{qlikCert},
+		}
+
+		client := &http.Client{Transport: customTransport}
+
+		details := clientDetails{
+			UserId:        "",
+			UserDirectory: "",
+			HTTP:          client,
+		}
+
+		// if userId OR userDirectory are not provided use the default INTERNAL\sa_api
+		if GlobalConfig.Qlik[q].UserId == "" || GlobalConfig.Qlik[q].UserDirectory == "" {
+			details.UserId = "sa_api"
+			details.UserDirectory = "INTERNAL"
+		} else {
+			details.UserId = GlobalConfig.Qlik[q].UserId
+			details.UserDirectory = GlobalConfig.Qlik[q].UserDirectory
+		}
+
+		QlikClients[q] = details
 	}
-
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: false,
-		Certificates:       []tls.Certificate{qlikCert},
-	}
-
-	client := &http.Client{Transport: customTransport}
-
-	QlikClient = client
 }

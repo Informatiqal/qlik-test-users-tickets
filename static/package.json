@@ -1,7 +1,7 @@
 {
   "name": "qlik-test-users-ticket-generator",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,8 +10,12 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@vitejs/plugin-basic-ssl": "^1.0.2",
     "@zerodevx/svelte-toast": "^0.9.5",
-    "svelte": "^4.2.7",
-    "vite": "^5.0.2"
+    "svelte": "^4.2.8",
+    "vite": "^5.0.5"
+  },
+  "dependencies": {
+    "svelte-select": "^5.8.1"
   }
 }

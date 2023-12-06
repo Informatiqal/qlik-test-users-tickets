@@ -15,15 +15,21 @@
 <div class="content">
   <div class="title">Test users</div>
   <div class="list">
-    {#each users as user}
-      <div
-        class="user"
-        class:selected={$selectedUser == user.userId}
-        on:click={() => selectUser(user.userId)}
-      >
-        {user.userDirectory}\{user.userId}
+    {#if users.length == 0}
+      <div class="no-users">
+        <div>No test users were found</div>
       </div>
-    {/each}
+    {:else}
+      {#each users as user}
+        <div
+          class="user"
+          class:selected={$selectedUser == user.userId}
+          on:click={() => selectUser(user.userId)}
+        >
+          {user.userDirectory}\{user.userId}
+        </div>
+      {/each}
+    {/if}
   </div>
 </div>
 
@@ -33,10 +39,13 @@
     padding: 0.5rem;
     text-align: left;
     border: 1px solid transparent;
+    transition: border 0.2s ease-in-out;
   }
 
   .user:hover {
     border: 1px solid #646cff;
+    border-top-left-radius: 8px;
+    transition: border 0.2s ease-in-out;
   }
 
   .selected {
@@ -44,6 +53,7 @@
   }
 
   .content {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -56,10 +66,18 @@
   }
 
   .list {
-    max-height: 300px;
-    min-height: 300px;
+    height: 307px;
     background-color: #3f3f46;
     border-top-left-radius: 8px;
     overflow: auto;
+    border: 1px solid transparent;
+  }
+
+  .no-users {
+    display: flex;
+    max-height: 300px;
+    min-height: 300px;
+    align-items: center;
+    justify-content: center;
   }
 </style>

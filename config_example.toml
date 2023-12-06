@@ -7,6 +7,7 @@ certificatesPath = "c:/path/to/certificates" # full path to where qlik certifica
 repositoryHost = "central-node-machine-name" # host/machine name where the repo communication to be made
 userId = "sa_api"                            # (optional) on behalf of which user the communication to be made. default is sa_api
 userDirectory = "INTERNAL"                   # (optional) internal user userDirectory. default is INTERNAL
+trustAllCerts = false                        # (optional) to ignore or not all ssl comm issues (like self-signed certificates). default is true
 
 # optional
 # mapping between the existing host/machine names and the pretty url

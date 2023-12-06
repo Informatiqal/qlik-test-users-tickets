@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/informatiqal/qlik-test-users-tickets/API"
 	"github.com/informatiqal/qlik-test-users-tickets/Config"
 	"github.com/informatiqal/qlik-test-users-tickets/Logger"
+	"github.com/informatiqal/qlik-test-users-tickets/api"
 	"github.com/informatiqal/qlik-test-users-tickets/cmd"
 	"github.com/informatiqal/qlik-test-users-tickets/static"
 	"github.com/kardianos/service"
@@ -32,14 +32,16 @@ func (p *program) run() {
 	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
 	h2 := logger.Chain.Then(http.HandlerFunc(api.ProxyServiceList))
 	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
+	h4 := logger.Chain.Then(http.HandlerFunc(api.ClustersList))
 
 	fs := http.FileServer(frontend.BuildHTTPFS())
 
 	http.Handle("/", fs)
 	http.Handle("/healthcheck", h)
 	http.Handle("/api/ticket", h1)
-	http.Handle("/api/proxies", h2)
-	http.Handle("/api/users", h3)
+	http.Handle("/api/proxies/", h2)
+	http.Handle("/api/users/", h3)
+	http.Handle("/api/clusters", h4)
 
 	log.Info().
 		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))
@@ -60,17 +62,20 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
-	args := os.Args
-
 	log := logger.Zero
 
-	var version = "0.3.0"
+	var version = "0.4.0"
 
+	// execute and terminal command first
 	cmd.Execute(version)
 
 	// no arguments were provided - run the main logic
-	if len(args) == 1 {
+	// this is here mostly because of the --help command
+	// have to check if it can be overwritten so the app to be
+	// in control of the exit
+	if len(os.Args) == 1 {
 
+		// this is mentioned multiple times. Have to be moved somewhere
 		svcConfig := &service.Config{
 			Name:        "QlikSenseTestUsers",
 			DisplayName: "Qlik Sense Test Users",
