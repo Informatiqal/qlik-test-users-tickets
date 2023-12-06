@@ -128,8 +128,11 @@ func CreateTestUsersCmd(
 	users []string,
 	userDirectorySuffix string,
 	cluster string,
-) bool {
-	client := config.QlikClients[cluster]
+) (bool, error) {
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return false, errors.New("cluster not found")
+	}
 
 	for _, user := range users {
 		xrfkey := util.GenerateXrfkey()
@@ -186,7 +189,7 @@ func CreateTestUsersCmd(
 		fmt.Printf("User \"%s\" created -> %s\n", strings.TrimSpace(user), responseData.Id)
 	}
 
-	return true
+	return true, nil
 }
 
 // TODO: this should just create ticket and nothing more (refactor)
@@ -212,7 +215,11 @@ func CreateTicketForUser(
 		return t, err
 	}
 
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		t := GeneratedTicket{}
+		return t, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
@@ -290,7 +297,10 @@ func CreateTicketForUser(
 }
 
 func GetVirtualProxies(cluster string) (*[]VirtualProxy, error) {
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return nil, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
@@ -333,7 +343,10 @@ func GetVirtualProxies(cluster string) (*[]VirtualProxy, error) {
 }
 
 func GetProxyServices(cluster string) (*[]ProxyService, error) {
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return nil, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 	baseUrl := fmt.Sprintf(
@@ -392,7 +405,10 @@ func GetProxyServices(cluster string) (*[]ProxyService, error) {
 }
 
 func GetTestUsers(cluster string) (*[]User, error) {
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return nil, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 
@@ -436,7 +452,10 @@ func GetTestUsers(cluster string) (*[]User, error) {
 }
 
 func GetUserDetails(userId string, cluster string) (*User, error) {
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return nil, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 
@@ -483,7 +502,10 @@ func GetUserDetails(userId string, cluster string) (*User, error) {
 }
 
 func getProxyService(id string, cluster string) (*ProxyServiceRaw, error) {
-	client := config.QlikClients[cluster]
+	client, clusterExists := config.QlikClients[cluster]
+	if !clusterExists {
+		return nil, errors.New("cluster not found")
+	}
 
 	xrfkey := util.GenerateXrfkey()
 	url := fmt.Sprintf(
@@ -509,7 +531,7 @@ func getProxyService(id string, cluster string) (*ProxyServiceRaw, error) {
 	req.Header.Add("X-Qlik-User", fmt.Sprintf(
 		"UserDirectory=%s;UserId=%s",
 		client.UserDirectory,
-		client.UserDirectory,
+		client.UserId,
 	))
 	resp, err := client.HTTP.Do(req)
 	if err != nil {
@@ -518,6 +540,11 @@ func getProxyService(id string, cluster string) (*ProxyServiceRaw, error) {
 		return &t, err
 	}
 
+	if resp.StatusCode == 403 {
+		log.Error().Err(err).Msg("Server responded with 403")
+		t := ProxyServiceRaw{}
+		return &t, errors.New("internal server error")
+	}
 	if resp.StatusCode == 404 {
 		log.Error().Err(err).Msg("ProxyService not found!" + id)
 		t := ProxyServiceRaw{}

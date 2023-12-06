@@ -32,14 +32,16 @@ func (p *program) run() {
 	h1 := logger.Chain.Then(http.HandlerFunc(api.GenerateTicket))
 	h2 := logger.Chain.Then(http.HandlerFunc(api.ProxyServiceList))
 	h3 := logger.Chain.Then(http.HandlerFunc(api.TestUsersList))
+	h4 := logger.Chain.Then(http.HandlerFunc(api.ClustersList))
 
 	fs := http.FileServer(frontend.BuildHTTPFS())
 
 	http.Handle("/", fs)
 	http.Handle("/healthcheck", h)
 	http.Handle("/api/ticket", h1)
-	http.Handle("/api/proxies", h2)
-	http.Handle("/api/users", h3)
+	http.Handle("/api/proxies/", h2)
+	http.Handle("/api/users/", h3)
+	http.Handle("/api/clusters", h4)
 
 	log.Info().
 		Msg("HTTPS server starting listening on port " + fmt.Sprint(config.GlobalConfig.Server.Port))
@@ -62,7 +64,7 @@ func (p *program) Stop(s service.Service) error {
 func main() {
 	log := logger.Zero
 
-	var version = "0.3.0"
+	var version = "0.4.0"
 
 	// execute and terminal command first
 	cmd.Execute(version)

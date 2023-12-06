@@ -15,6 +15,7 @@ type qlikCluster struct {
 	UserId           string
 	UserDirectory    string
 	RepositoryHost   string
+	TrustAllCerts    bool
 	DomainMapping    map[string]string
 }
 
@@ -34,7 +35,7 @@ type clientDetails struct {
 	HTTP          *http.Client
 }
 
-var QlikClients map[string]clientDetails
+var QlikClients = make(map[string]clientDetails)
 
 func NewConfig() {
 	log := logger.Zero
@@ -64,10 +65,9 @@ func NewConfig() {
 }
 
 func setQlikHttpClients() {
+	log := logger.Zero
 
 	for q := range GlobalConfig.Qlik {
-		log := logger.Zero
-
 		qlikCert, err := tls.LoadX509KeyPair(
 			GlobalConfig.Qlik[q].CertificatesPath+"/client.pem",
 			GlobalConfig.Qlik[q].CertificatesPath+"/client_key.pem",
@@ -76,9 +76,14 @@ func setQlikHttpClients() {
 			log.Fatal().Err(err).Msg(err.Error())
 		}
 
+		trustAllCerts := true
+		if GlobalConfig.Qlik[q].TrustAllCerts {
+			trustAllCerts = !GlobalConfig.Qlik[q].TrustAllCerts
+		}
+
 		customTransport := http.DefaultTransport.(*http.Transport).Clone()
 		customTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: false,
+			InsecureSkipVerify: trustAllCerts,
 			Certificates:       []tls.Certificate{qlikCert},
 		}
 
@@ -90,10 +95,13 @@ func setQlikHttpClients() {
 			HTTP:          client,
 		}
 
-		// if userId is not provided use the default INTERNAL\sa_api
-		if GlobalConfig.Qlik[q].UserId == "" {
+		// if userId OR userDirectory are not provided use the default INTERNAL\sa_api
+		if GlobalConfig.Qlik[q].UserId == "" || GlobalConfig.Qlik[q].UserDirectory == "" {
 			details.UserId = "sa_api"
 			details.UserDirectory = "INTERNAL"
+		} else {
+			details.UserId = GlobalConfig.Qlik[q].UserId
+			details.UserDirectory = GlobalConfig.Qlik[q].UserDirectory
 		}
 
 		QlikClients[q] = details
