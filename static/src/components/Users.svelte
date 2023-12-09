@@ -20,9 +20,10 @@
         <div>No test users were found</div>
       </div>
     {:else}
-      {#each users as user}
+      {#each users as user, index}
         <div
-          class="user"
+          class:user={index != 0}
+          class:user0={index == 0}
           class:selected={$selectedUser == user.userId}
           on:click={() => selectUser(user.userId)}
         >
@@ -43,6 +44,21 @@
   }
 
   .user:hover {
+    border: 1px solid #646cff;
+    transition: border 0.2s ease-in-out;
+  }
+
+  /* TODO: repetition*/
+  .user0 {
+    cursor: pointer;
+    padding: 0.5rem;
+    text-align: left;
+    border: 1px solid transparent;
+    transition: border 0.2s ease-in-out;
+    border-top-left-radius: 8px;
+  }
+
+  .user0:hover {
     border: 1px solid #646cff;
     border-top-left-radius: 8px;
     transition: border 0.2s ease-in-out;
