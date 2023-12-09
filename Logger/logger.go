@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/justinas/alice"
+	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 )
@@ -18,19 +19,22 @@ func init() {
 	pwd, _ := os.Executable()
 	dir := filepath.Dir(pwd)
 
-	appLogFile, _ := os.OpenFile(
-		dir+"/app.log",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0664,
-	)
-	appLog := zerolog.MultiLevelWriter(appLogFile)
+	appLogConsole := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	appLogFile := &lumberjack.Logger{
+		Filename:  dir + "/logs/app.log",
+		LocalTime: true,
+		Compress:  true,
+	}
+	appLogFile.Rotate()
+	appLog := zerolog.MultiLevelWriter(appLogFile, appLogConsole)
 	Zero = zerolog.New(appLog).With().Timestamp().Logger()
 
-	httpLogFile, _ := os.OpenFile(
-		dir+"/http.log",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0664,
-	)
+	httpLogFile := &lumberjack.Logger{
+		Filename:  dir + "/logs/http.log",
+		LocalTime: true,
+		Compress:  true,
+	}
+	httpLogFile.Rotate()
 	httpLog := zerolog.MultiLevelWriter(httpLogFile)
 	httpLogger := zerolog.New(httpLog).With().Timestamp().Logger()
 

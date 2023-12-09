@@ -23,7 +23,7 @@ go.work
 .vscode/settings.json
 config.toml
 *.pem
-*.log
+logs/*
 resource.syso
 *.zip
 temp-build/

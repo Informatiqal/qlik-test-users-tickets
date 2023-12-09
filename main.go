@@ -64,7 +64,7 @@ func (p *program) Stop(s service.Service) error {
 func main() {
 	log := logger.Zero
 
-	var version = "0.4.0"
+	var version = "0.4.1"
 
 	// execute and terminal command first
 	cmd.Execute(version)

@@ -46,17 +46,19 @@
     "--toastBarBackground": "darkred",
   };
 
+  $: if ($selectedProxy) {
+    virtualProxies = proxies.filter((p) => p.id == $selectedProxy)[0]
+      .virtualProxies;
+
+    if (virtualProxies.length == 1) selectedVP.select(virtualProxies[0].prefix);
+  } else {
+    virtualProxies = [];
+  }
+
   $: if ($selectedUser && $selectedVP != undefined) {
     generateButtonEnabled = true;
   } else {
     generateButtonEnabled = false;
-  }
-
-  $: if ($selectedProxy) {
-    virtualProxies = proxies.filter((p) => p.id == $selectedProxy)[0]
-      .virtualProxies;
-  } else {
-    virtualProxies = [];
   }
 
   $: if (!generateButtonEnabled) {
@@ -72,6 +74,9 @@
       .then((r) => r.json())
       .then((r) => {
         users = r;
+
+        // pre-select the user if there is only one available
+        if (users.length == 1) selectedUser.select(users[0].userId);
       });
   }
 

@@ -3,7 +3,7 @@
 
   export let proxies;
 
-  function selectUser(prefix) {
+  function selectProxy(prefix) {
     if (prefix == $selectedProxy) {
       selectedProxy.select(undefined);
       return;
@@ -20,7 +20,7 @@
       <div
         class="proxy"
         class:selected={$selectedProxy == p.id}
-        on:click={() => selectUser(p.id)}
+        on:click={() => selectProxy(p.id)}
       >
         <span class="wrap" title={p.name}>{p.name}</span>
         <span class="host-name wrap" title={p.hostName}>{p.hostName}</span>
