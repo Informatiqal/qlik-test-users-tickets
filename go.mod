@@ -4,7 +4,7 @@ go 1.21.4
 
 require (
 	github.com/justinas/alice v1.2.0
-	github.com/kardianos/service v1.2.2
+	github.com/kardianos/service v1.3.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
